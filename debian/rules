@@ -27,8 +27,8 @@ debian/SOURCE:
 ## Debhelper phases
 override_dh_quilt_patch:
 	# Apply crack bundle
-	git -C ${KERNEL_SRC} fetch ../crack.bundle $$(git -C ${KERNEL_SRC} ls-remote ../crack.bundle | cut -f1)
-	git -C ${KERNEL_SRC} checkout -f FETCH_HEAD
+#	git -C ${KERNEL_SRC} fetch ../crack.bundle $$(git -C ${KERNEL_SRC} ls-remote ../crack.bundle | cut -f1)
+#	git -C ${KERNEL_SRC} checkout -f FETCH_HEAD
 	# Apply patches
 	cd ${KERNEL_SRC}; \
 		QUILT_PATCHES=../debian/patches  \
