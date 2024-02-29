@@ -1,3 +1,9 @@
+pve-kernel (6.1.43) rockchip; urgency=medium
+
+  * init
+
+ -- Jiangcuo <jiangcuo@bingsin.com>  Thu, 29 Feb 2024 02:18:53 +0000
+
 pve-kernel (6.1.79-1) generic; urgency=medium
 
   * Update to Linux 6.1.79.
