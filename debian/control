@@ -27,42 +27,42 @@ Build-Depends: asciidoc,
                xmlto,
                zlib1g-dev,
                zstd
-Build-Conflicts: pve-headers-6.1.43-rockchip,
+Build-Conflicts: pve-headers-6.7.0-rockchip,
 Vcs-Git: git://github.com/fabianishere/pve-rockchip-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-rockchip-kernel
 
-Package: linux-tools-6.1
+Package: linux-tools-6.7
 Architecture: any
 Section: devel
 Priority: optional
 Depends: linux-base,
          ${misc:Depends},
          ${shlibs:Depends},
-Description: Linux kernel version specific tools for version 6.1
+Description: Linux kernel version specific tools for version 6.7
  This package provides the architecture dependent parts for kernel
  version locked tools (such as perf and x86_energy_perf_policy)
 
-Package: pve-headers-6.1-rockchip
+Package: pve-headers-6.7-rockchip
 Architecture: all
 Section: admin
 Priority: optional
-Depends: pve-headers-6.1.43-rockchip,
+Depends: pve-headers-6.7.0-rockchip,
 Description: Latest Proxmox Edge Kernel Headers
  This is a metapackage which will install the kernel headers
- for the latest available Proxmox Edge kernel from the 6.1
+ for the latest available Proxmox Edge kernel from the 6.7
  series.
 
-Package: pve-kernel-6.1-rockchip
+Package: pve-kernel-6.7-rockchip
 Architecture: all
 Section: admin
 Priority: optional
 Depends: pve-firmware,
-         pve-kernel-6.1.43-rockchip,
+         pve-kernel-6.7.0-rockchip,
 Description: Latest Proxmox Edge Kernel Image
  This is a metapackage which will install the latest available
- Proxmox Edge kernel from the 6.1 series.
+ Proxmox Edge kernel from the 6.7 series.
 
-Package: pve-headers-6.1.43-rockchip
+Package: pve-headers-6.7.0-rockchip
 Section: devel
 Priority: optional
 Architecture: any
@@ -72,7 +72,7 @@ Depends:
 Description: The Proxmox Edge Kernel Headers
  This package contains the Proxmox Edge Linux kernel headers
 
-Package: pve-kernel-6.1.43-rockchip
+Package: pve-kernel-6.7.0-rockchip
 Section: admin
 Priority: optional
 Architecture: any

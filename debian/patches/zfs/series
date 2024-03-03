@@ -1,0 +1,12 @@
+0001-Check-for-META-and-DCH-consistency-in-autoconf.patch
+0002-always-load-ZFS-module-on-boot.patch
+0003-Fix-the-path-to-the-zed-binary-on-the-systemd-unit.patch
+0004-import-with-d-dev-disk-by-id-in-scan-service.patch
+0005-Enable-zed-emails.patch
+0006-dont-symlink-zed-scripts.patch
+0007-Add-systemd-unit-for-importing-specific-pools.patch
+0008-Patch-move-manpage-arcstat-1-to-arcstat-8.patch
+0009-arc-stat-summary-guard-access-to-l2arc-MFU-MRU-stats.patch
+0010-zvol-Remove-broken-blk-mq-optimization.patch
+0011-Revert-zvol-Temporally-disable-blk-mq.patch
+0012-Fix-nfs_truncate_shares-without-etc-exports.d.patch
