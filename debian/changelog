@@ -1,3 +1,9 @@
+pve-kernel (6.1.43-1) rockchip; urgency=medium
+
+  * rename 
+
+ -- jiangcuo <jiangcuo@bingsin.com>  Sun, 31 Mar 2024 07:17:15 +0000
+
 pve-kernel (6.1.43-1) orangepi; urgency=medium
 
   * init
