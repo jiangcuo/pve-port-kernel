@@ -1,3 +1,9 @@
+pve-kernel (6.1.43-2) rockchip; urgency=medium
+
+  * enable KProbes
+
+ -- jiangcuo <jiangcuo@bingsin.com>  Tue, 02 Apr 2024 01:34:36 +0000
+
 pve-kernel (6.1.43-1) rockchip; urgency=medium
 
   * rename 
