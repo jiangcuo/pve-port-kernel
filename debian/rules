@@ -12,6 +12,12 @@ BUILD_DIR ?= ${CURDIR}
 KERNEL_SRC := linux
 ZFS_SRC := zfs
 
+ifeq ($(DEB_BUILD_ARCH),loong64)
+DEF_CONFIG := loongson3_defconfig
+else
+DEF_CONFIG := openeuler_defconfig
+endif
+
 %:
 	dh $@ --with quilt
 
@@ -84,8 +90,9 @@ override_dh_auto_clean: debian/control
 PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
 ${KERNEL_SRC}/.config:
-	cp debian/config/${DEB_BUILD_ARCH}.kconfig ${KERNEL_SRC}/.config
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} olddefconfig
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} ${DEF_CONFIG}
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_BUILD_ARCH}.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
