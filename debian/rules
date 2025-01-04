@@ -91,8 +91,8 @@ PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PV
 
 ${KERNEL_SRC}/.config:
 	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} ${DEF_CONFIG}
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_BUILD_ARCH}.kconfig
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_BUILD_ARCH}.kconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
