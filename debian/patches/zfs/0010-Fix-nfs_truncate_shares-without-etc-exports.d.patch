@@ -30,6 +30,7 @@ Closes #15369
 Closes #15468
 (cherry picked from commit 41e55b476bcfc90f1ad81c02c5375367fdace9e9)
 Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  lib/libshare/os/linux/nfs.c | 18 ++++++++++++++++++
  1 file changed, 18 insertions(+)

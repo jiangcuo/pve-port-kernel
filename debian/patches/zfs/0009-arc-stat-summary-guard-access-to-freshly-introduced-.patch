@@ -31,6 +31,7 @@ These are present in the current kernel, but lead to an exception, if
 running the new user-space with an old kernel module.
 
 Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
  cmd/arc_summary | 132 ++++++++++++++++++++++++------------------------
  cmd/arcstat.in  |  48 +++++++++---------
