@@ -1,3 +1,11 @@
+pve-kernel (6.12.11-1) pve; urgency=medium
+
+  * Sync kconfig from debian
+
+  * Update linux to 6.12.11
+
+ -- Jiangcuo <jiangcuo@lierfang.com>  Sun, 26 Jan 2025 17:13:40 +0800
+
 pve-kernel (6.12.3-2) pve; urgency=medium
 
   * Add some network driver include loongson dwmac yt6801
