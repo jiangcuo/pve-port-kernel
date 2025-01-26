@@ -1,55 +1,5 @@
-From 7f71507851fc7764b36a3221839607d3a45c2025 Mon Sep 17 00:00:00 2001
-From: Huacai Chen <chenhuacai@loongson.cn>
-Date: Tue, 3 Dec 2024 19:49:28 +0800
-Subject: LoongArch: KVM: Protect kvm_io_bus_{read,write}() with SRCU
-
-When we enable lockdep we get such a warning:
-
- =============================
- WARNING: suspicious RCU usage
- 6.12.0-rc7+ #1891 Tainted: G        W
- -----------------------------
- arch/loongarch/kvm/../../../virt/kvm/kvm_main.c:5945 suspicious rcu_dereference_check() usage!
- other info that might help us debug this:
- rcu_scheduler_active = 2, debug_locks = 1
- 1 lock held by qemu-system-loo/948:
-  #0: 90000001184a00a8 (&vcpu->mutex){+.+.}-{4:4}, at: kvm_vcpu_ioctl+0xf4/0xe20 [kvm]
- stack backtrace:
- CPU: 2 UID: 0 PID: 948 Comm: qemu-system-loo Tainted: G        W          6.12.0-rc7+ #1891
- Tainted: [W]=WARN
- Hardware name: Loongson Loongson-3A5000-7A1000-1w-CRB/Loongson-LS3A5000-7A1000-1w-CRB, BIOS vUDK2018-LoongArch-V2.0.0-prebeta9 10/21/2022
- Stack : 0000000000000089 9000000005a0db9c 90000000071519c8 900000012c578000
-         900000012c57b940 0000000000000000 900000012c57b948 9000000007e53788
-         900000000815bcc8 900000000815bcc0 900000012c57b7b0 0000000000000001
-         0000000000000001 4b031894b9d6b725 0000000005dec000 9000000100427b00
-         00000000000003d2 0000000000000001 000000000000002d 0000000000000003
-         0000000000000030 00000000000003b4 0000000005dec000 0000000000000000
-         900000000806d000 9000000007e53788 00000000000000b4 0000000000000004
-         0000000000000004 0000000000000000 0000000000000000 9000000107baf600
-         9000000008916000 9000000007e53788 9000000005924778 000000001fe001e5
-         00000000000000b0 0000000000000007 0000000000000000 0000000000071c1d
-         ...
- Call Trace:
- [<9000000005924778>] show_stack+0x38/0x180
- [<90000000071519c4>] dump_stack_lvl+0x94/0xe4
- [<90000000059eb754>] lockdep_rcu_suspicious+0x194/0x240
- [<ffff80000221f47c>] kvm_io_bus_read+0x19c/0x1e0 [kvm]
- [<ffff800002225118>] kvm_emu_mmio_read+0xd8/0x440 [kvm]
- [<ffff8000022254bc>] kvm_handle_read_fault+0x3c/0xe0 [kvm]
- [<ffff80000222b3c8>] kvm_handle_exit+0x228/0x480 [kvm]
-
-Fix it by protecting kvm_io_bus_{read,write}() with SRCU.
-
-Cc: stable@vger.kernel.org
-Reviewed-by: Bibo Mao <maobibo@loongson.cn>
-Signed-off-by: Huacai Chen <chenhuacai@loongson.cn>
----
- arch/loongarch/kvm/exit.c     | 31 +++++++++++++++++++++----------
- arch/loongarch/kvm/intc/ipi.c |  6 +++++-
- 2 files changed, 26 insertions(+), 11 deletions(-)
-
 diff --git a/arch/loongarch/kvm/exit.c b/arch/loongarch/kvm/exit.c
-index 69f3e3782cc9ef..a7893bd01e732a 100644
+index 69f3e3782cc9..a7893bd01e73 100644
 --- a/arch/loongarch/kvm/exit.c
 +++ b/arch/loongarch/kvm/exit.c
 @@ -156,7 +156,7 @@ static int kvm_handle_csr(struct kvm_vcpu *vcpu, larch_inst inst)
@@ -144,7 +94,7 @@ index 69f3e3782cc9ef..a7893bd01e732a 100644
  			return EMULATE_DONE;
  
 diff --git a/arch/loongarch/kvm/intc/ipi.c b/arch/loongarch/kvm/intc/ipi.c
-index a233a323e29577..93f4acd445236e 100644
+index a233a323e295..93f4acd44523 100644
 --- a/arch/loongarch/kvm/intc/ipi.c
 +++ b/arch/loongarch/kvm/intc/ipi.c
 @@ -98,7 +98,7 @@ static void write_mailbox(struct kvm_vcpu *vcpu, int offset, uint64_t data, int
@@ -176,6 +126,3 @@ index a233a323e29577..93f4acd445236e 100644
  	if (unlikely(ret))
  		kvm_err("%s: : write date to addr %llx failed\n", __func__, addr);
  
--- 
-cgit 1.2.3-korg
-

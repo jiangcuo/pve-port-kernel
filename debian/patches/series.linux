@@ -4,11 +4,6 @@ pve/0003-bridge-keep-MAC-of-first-assigned-port.patch
 pve/0005-kvm-disable-default-dynamic-halt-polling-growth.patch
 pve/0006-net-core-downgrade-unregister_netdevice-refcount-lea.patch
 pve/0007-Revert-fortify-Do-not-cast-to-unsigned-char.patch
-pve/0008-kvm-xsave-set-mask-out-PKRU-bit-in-xfeatures-if-vCPU.patch
-pve/0009-allow-opt-in-to-allow-pass-through-on-broken-hardwar.patch
-pve/0010-KVM-nSVM-Advertise-support-for-flush-by-ASID.patch
-pve/0011-revert-memfd-improve-userspace-warnings-for-missing-.patch
-pve/0013-io_uring-rw-treat-EOPNOTSUPP-for-IOCB_NOWAIT-like-EA.patch
 pve/0018-add-Motorcomm-YT6801-driver.patch
 loongarch/001-LoongArch-KVM-Add-iocsr-and-mmio-bus-simulation-in-kernel.patch
 loongarch/002-LoongArch-KVM-Add-IPI-device-support.patch
@@ -22,10 +17,8 @@ loongarch/009-LoongArch-KVM-Add-PCHPIC-read-and-write-functions.patch
 loongarch/010-LoongArch-KVM-Add-PCHPIC-user-mode-read-and-write-functions.patch
 loongarch/011-LoongArch-KVM-Add-irqfd-support.patch
 loongarch/012-irqchip-loongson-eiointc-Add-virt-extension-support.patch
-loongarch/013-LoongArch-Fix-reserving-screen-info-memory-for-above-4G-firmware.patch
+loongarch/013-LoongArch-KVM-Add-hypercall-service-support-for-usermode-VMM.patch
 loongarch/014-LoongArch-irq-Use-seq_put_decimal_ull_width-for-decimal-values.patch
 loongarch/015-LoongArch-Add-architecture-specific-huge_pte_clear.patch
-loongarch/016-LoongArch-BPF-Adjust-the-parameter-of-emit_jirl.patch
-loongarch/017-LoongArch-KVM-Protect-kvm_check_requests-with-SRCU.patch
 loongarch/018-LoongArch-KVM-Protect-kvm_io_bus_-read-write-with-SRCU.patch
-loongarch/019-LoongArch-KVM-Add-hypcall-to-emulate-syscall.patch
+loongarch/020-LoongArch-KVM-Clear-LLBCTL-if-secondary-mmu-mapping-is-changed.patch
