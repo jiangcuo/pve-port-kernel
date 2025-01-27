@@ -1,3 +1,9 @@
+pve-kernel (6.12.11-2) pve; urgency=medium
+
+  * Sync patches and config
+
+ -- Jiangcuo <jiangcuo@lierfang.com>  Mon, 27 Jan 2025 22:35:27 +0800
+
 pve-kernel (6.12.11-1) pve; urgency=medium
 
   * Sync kconfig from debian

@@ -20,6 +20,5 @@ loongarch/012-irqchip-loongson-eiointc-Add-virt-extension-support.patch
 loongarch/013-LoongArch-KVM-Add-hypercall-service-support-for-usermode-VMM.patch
 loongarch/014-LoongArch-irq-Use-seq_put_decimal_ull_width-for-decimal-values.patch
 loongarch/016-LoongArch-Add-LS7A-IOMMU-support.patch
-loongarch/015-LoongArch-Add-architecture-specific-huge_pte_clear.patch
 loongarch/018-LoongArch-KVM-Protect-kvm_io_bus_-read-write-with-SRCU.patch
 loongarch/020-LoongArch-KVM-Clear-LLBCTL-if-secondary-mmu-mapping-is-changed.patch
