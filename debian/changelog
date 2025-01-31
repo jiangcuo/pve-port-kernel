@@ -1,3 +1,9 @@
+pve-kernel (6.12.11-3) pve; urgency=medium
+
+  * Update common config
+
+ -- Jiangcuo <jiangcuo@lierfang.com>  Fri, 31 Jan 2025 14:46:47 +0800
+
 pve-kernel (6.12.11-2) pve; urgency=medium
 
   * Sync patches and config
