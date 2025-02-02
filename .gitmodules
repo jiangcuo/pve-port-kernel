@@ -1,6 +1,6 @@
 [submodule "zfs"]
 	path = zfs
-	url = https://github.com/openzfs/zfs.git
+	url = https://gitea.lierfang.com/Proxmox-Port/zfs
 [submodule "linux"]
 	path = linux
-	url = https://gitee.com/openeuler/kernel.git
+	url = https://gitea.lierfang.com/Proxmox-Port/linux-openeuler
