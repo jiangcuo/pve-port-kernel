@@ -1,3 +1,9 @@
+pve-kernel (6.6.0-8) openeuler; urgency=medium
+
+  * Update to openeuler 20250404
+
+ -- Jiangcuo <jiangcuo@lierfang.com>  Fri, 04 Apr 2025 17:45:37 +0800
+
 pve-kernel (6.6.0-7) openeuler; urgency=medium
 
   * Update to openeuler 20250218
