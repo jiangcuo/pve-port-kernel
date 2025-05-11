@@ -1,3 +1,9 @@
+pve-kernel (6.6.0-9) openeuler; urgency=medium
+
+  * Update to  openeuler 20250511 
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Sun, 11 May 2025 11:05:50 +0000
+
 pve-kernel (6.6.0-8) openeuler; urgency=medium
 
   * Update to openeuler 20250404
