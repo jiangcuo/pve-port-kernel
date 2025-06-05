@@ -1,3 +1,11 @@
+pve-kernel (6.6.0-10) openeuler; urgency=medium
+
+  * Update to openeuler 20250604
+
+  * Enable eNFS support
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Wed, 04 Jun 2025 17:33:21 +0800
+
 pve-kernel (6.6.0-9) openeuler; urgency=medium
 
   * Update to  openeuler 20250511 
