@@ -6,17 +6,13 @@ include /usr/share/dpkg/default.mk
 include debian/rules.d/common.mk
 
 # Pull in some arch specific stuff
-include debian/rules.d/arch/${DEB_BUILD_ARCH}.mk
+include debian/rules.d/arch/${DEB_HOST_ARCH}.mk
 
 BUILD_DIR ?= ${CURDIR}
 KERNEL_SRC := linux
 ZFS_SRC := zfs
 
-ifeq ($(DEB_BUILD_ARCH),loong64)
-DEF_CONFIG := loongson3_defconfig
-else
-DEF_CONFIG := openeuler_defconfig
-endif
+DEF_CONFIG := defconfig
 
 %:
 	dh $@ --with quilt
@@ -55,21 +51,31 @@ override_dh_quilt_unpatch:
 	rm -rf ${KERNEL_SRC}/.pc ${ZFS_SRC}/.pc
 
 override_dh_autoreconf:
-	dh_autoreconf -D ${ZFS_SRC}
+	dh_autoreconf -D ${ZFS_SRC} 
 
 override_dh_auto_configure: ${KERNEL_SRC}/.config
 
 override_dh_auto_build:
 	# Kernel
 	dh_auto_build -D ${KERNEL_SRC} -- \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
 		CC="${PVE_KERNEL_CC}" \
+		HOSTCC=${PVE_KERNEL_CC}  \
+		ARCH="${KER_ARCH}" \
 		KCFLAGS="${PVE_KERNEL_CFLAGS}" \
 		EXTRAVERSION="${EXTRAVERSION}" \
 		LOCALVERSION="${LOCALVERSION}" \
 		KBUILD_BUILD_VERSION_TIMESTAMP="${PKG_DISTRIBUTOR} ${DEB_VERSION} (${PKG_DATE_UTC_ISO})"
 	# ZFS
-	dh_auto_configure -D ${ZFS_SRC} -- CC="${PVE_ZFS_CC}" --with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
-	dh_auto_build -D ${ZFS_SRC}
+	dh_auto_configure -D ${ZFS_SRC} -- \
+		CC="${PVE_ZFS_CC}"  \
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		--with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
+	dh_auto_build -D ${ZFS_SRC} -- \
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		CC="${PVE_ZFS_CC}" 
 
 override_dh_auto_install: debian/SOURCE .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
@@ -90,9 +96,9 @@ override_dh_auto_clean: debian/control
 PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
 ${KERNEL_SRC}/.config:
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} ${DEF_CONFIG}
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} ${DEF_CONFIG}
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_BUILD_ARCH}.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${KER_ARCH}.kconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
@@ -114,7 +120,7 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	# remove firmware
 	rm -rf debian/${PVE_KERNEL_PKG}/lib/firmware
 	# strip debug info
-	find debian/${PVE_KERNEL_PKG}/lib/modules -name \*.ko -print | while read f ; do strip --strip-debug "$$f"; done
+	find debian/${PVE_KERNEL_PKG}/lib/modules -name \*.ko -print | while read f ; do ${CROSS_COMPILE}strip --strip-debug "$$f"; done
 	# finalize
 	/sbin/depmod -b debian/${PVE_KERNEL_PKG}/ ${KVNAME}
 	# Autogenerate blacklist for watchdog devices (see README)
@@ -134,7 +140,11 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 		NO_LIBPYTHON=1 \
 		NO_LIBPERL=1 \
 		NO_LIBCRYPTO=1 \
-		PYTHON=python3
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		CC="${PVE_KERNEL_CC}" \
+		PYTHON=python3 \
+		NO_PERF_READ_VDSO32=1
 	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'

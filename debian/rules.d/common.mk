@@ -9,9 +9,6 @@ PKG_DATE := $(shell dpkg-parsechangelog -SDate)
 PKG_DATE_UTC_ISO := $(shell date -u -d '$(PKG_DATE)' +%Y-%m-%d)
 PKG_GIT_VERSION := $(shell git rev-parse HEAD)
 
-# Build settings
-PVE_KERNEL_CC ?= ${CC}
-PVE_ZFS_CC ?= ${CC}
 
 ### Debian package names
 EXTRAVERSION=-${PKG_RELEASE}-${DEB_DISTRIBUTION}
