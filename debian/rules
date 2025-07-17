@@ -98,7 +98,7 @@ PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PV
 ${KERNEL_SRC}/.config:
 	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} ${DEF_CONFIG}
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${KER_ARCH}.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_HOST_ARCH}.kconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
@@ -125,7 +125,7 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	/sbin/depmod -b debian/${PVE_KERNEL_PKG}/ ${KVNAME}
 	# Autogenerate blacklist for watchdog devices (see README)
 	install -m 0755 -d debian/${PVE_KERNEL_PKG}/lib/modprobe.d
-	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > debian/watchdog-blacklist.tmp
+	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > debian/watchdog-blacklist.tmp || true
 	echo ipmi_watchdog.ko >> debian/watchdog-blacklist.tmp
 	cat debian/watchdog-blacklist.tmp | sed -e 's/^/blacklist /' -e 's/.ko$$//' | sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/source

@@ -32,7 +32,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/cmd/zed/zed.d/Makefile.am b/cmd/zed/zed.d/Makefile.am
-index 093a04c46..e5e735d00 100644
+index 093a04c4636a7455f8ca4b2644f79967736d6233..e5e735d0013a6a20120ff9529a9275557cf88713 100644
 --- a/cmd/zed/zed.d/Makefile.am
 +++ b/cmd/zed/zed.d/Makefile.am
 @@ -50,7 +50,7 @@ zed-install-data-hook:

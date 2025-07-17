@@ -23,7 +23,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  create mode 100644 etc/systemd/system/zfs-import@.service.in
 
 diff --git a/etc/Makefile.am b/etc/Makefile.am
-index 7187762d3..de131dc87 100644
+index 7187762d380296981b0c440824676f8e47355816..de131dc87952e0668ef9d2b5b951634c939bfff5 100644
 --- a/etc/Makefile.am
 +++ b/etc/Makefile.am
 @@ -54,6 +54,7 @@ dist_systemdpreset_DATA = \
@@ -35,7 +35,7 @@ index 7187762d3..de131dc87 100644
  	%D%/systemd/system/zfs-mount.service \
  	%D%/systemd/system/zfs-scrub-monthly@.timer \
 diff --git a/etc/systemd/system/50-zfs.preset b/etc/systemd/system/50-zfs.preset
-index e4056a92c..030611419 100644
+index e4056a92cd985380aa7346f4b291e4c3f1446fee..030611419816c83bcb86fc9c23d31855014eb914 100644
 --- a/etc/systemd/system/50-zfs.preset
 +++ b/etc/systemd/system/50-zfs.preset
 @@ -1,6 +1,7 @@
@@ -48,7 +48,7 @@ index e4056a92c..030611419 100644
  enable zfs-share.service
 diff --git a/etc/systemd/system/zfs-import@.service.in b/etc/systemd/system/zfs-import@.service.in
 new file mode 100644
-index 000000000..5bd19fb79
+index 0000000000000000000000000000000000000000..5bd19fb795e2b5554b3932e0b84b2668c2dcac51
 --- /dev/null
 +++ b/etc/systemd/system/zfs-import@.service.in
 @@ -0,0 +1,18 @@
