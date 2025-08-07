@@ -1,3 +1,12 @@
+pve-kernel (6.6.0-11) openeuler; urgency=medium
+
+  * Update linux to openeuler 20250807
+  * Update zfs to 2.2.8
+  * Add some arm64 architecture support
+  * Disable hisi_pmu
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Thu, 07 Aug 2025 14:43:26 +0000
+
 pve-kernel (6.6.0-10) openeuler; urgency=medium
 
   * Update to openeuler 20250604

@@ -33,7 +33,7 @@ Build-Depends: asciidoc,
                systemtap-sdt-dev,
                zlib1g-dev,
                zstd
-Build-Conflicts: pve-headers-6.6.0-10-openeuler,
+Build-Conflicts: pve-headers-6.6.0-11-openeuler,
 Vcs-Git: git://github.com/fabianishere/pve-openeuler-kernel.git
 Vcs-Browser: https://github.com/fabianishere/pve-openeuler-kernel
 
@@ -52,7 +52,7 @@ Package: pve-headers-6.6-openeuler
 Architecture: all
 Section: admin
 Priority: optional
-Depends: pve-headers-6.6.0-10-openeuler,
+Depends: pve-headers-6.6.0-11-openeuler,
 Description: Latest Proxmox Edge Kernel Headers
  This is a metapackage which will install the kernel headers
  for the latest available Proxmox Edge kernel from the 6.6
@@ -63,12 +63,12 @@ Architecture: all
 Section: admin
 Priority: optional
 Depends: pve-firmware,
-         pve-kernel-6.6.0-10-openeuler,
+         pve-kernel-6.6.0-11-openeuler,
 Description: Latest Proxmox Edge Kernel Image
  This is a metapackage which will install the latest available
  Proxmox Edge kernel from the 6.6 series.
 
-Package: pve-headers-6.6.0-10-openeuler
+Package: pve-headers-6.6.0-11-openeuler
 Section: devel
 Priority: optional
 Architecture: any
@@ -78,7 +78,7 @@ Depends:
 Description: The Proxmox Edge Kernel Headers
  This package contains the Proxmox Edge Linux kernel headers
 
-Package: pve-kernel-6.6.0-10-openeuler
+Package: pve-kernel-6.6.0-11-openeuler
 Section: admin
 Priority: optional
 Architecture: any
