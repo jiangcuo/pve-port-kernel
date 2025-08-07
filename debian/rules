@@ -6,13 +6,13 @@ include /usr/share/dpkg/default.mk
 include debian/rules.d/common.mk
 
 # Pull in some arch specific stuff
-include debian/rules.d/arch/${DEB_BUILD_ARCH}.mk
+include debian/rules.d/arch/${DEB_HOST_ARCH}.mk
 
 BUILD_DIR ?= ${CURDIR}
 KERNEL_SRC := linux
 ZFS_SRC := zfs
 
-ifeq ($(DEB_BUILD_ARCH),loong64)
+ifeq ($(DEB_HOST_ARCH),loong64)
 DEF_CONFIG := loongson3_defconfig
 else
 DEF_CONFIG := openeuler_defconfig
@@ -62,14 +62,24 @@ override_dh_auto_configure: ${KERNEL_SRC}/.config
 override_dh_auto_build:
 	# Kernel
 	dh_auto_build -D ${KERNEL_SRC} -- \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
 		CC="${PVE_KERNEL_CC}" \
+		HOSTCC=${PVE_KERNEL_CC}  \
+		ARCH="${KER_ARCH}" \
 		KCFLAGS="${PVE_KERNEL_CFLAGS}" \
 		EXTRAVERSION="${EXTRAVERSION}" \
 		LOCALVERSION="${LOCALVERSION}" \
 		KBUILD_BUILD_VERSION_TIMESTAMP="${PKG_DISTRIBUTOR} ${DEB_VERSION} (${PKG_DATE_UTC_ISO})"
 	# ZFS
-	dh_auto_configure -D ${ZFS_SRC} -- CC="${PVE_ZFS_CC}" --with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
-	dh_auto_build -D ${ZFS_SRC}
+	dh_auto_configure -D ${ZFS_SRC} -- \
+		CC="${PVE_ZFS_CC}"  \
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		--with-config=kernel --with-linux=$(realpath ${KERNEL_SRC}) --with-linux-obj=$(realpath ${KERNEL_SRC})
+	dh_auto_build -D ${ZFS_SRC} -- \
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		CC="${PVE_ZFS_CC}" 
 
 override_dh_auto_install: debian/SOURCE .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
@@ -90,9 +100,9 @@ override_dh_auto_clean: debian/control
 PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
 ${KERNEL_SRC}/.config:
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} ${DEF_CONFIG}
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} ${DEF_CONFIG}
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_BUILD_ARCH}.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_HOST_ARCH}.kconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
@@ -105,7 +115,8 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	install -m 644 ${KERNEL_SRC}/.config debian/${PVE_KERNEL_PKG}/boot/config-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/System.map debian/${PVE_KERNEL_PKG}/boot/System.map-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/${KERNEL_IMAGE_PATH} debian/${PVE_KERNEL_PKG}/boot/${KERNEL_INSTALL_FILE}-${KVNAME}
-	${MAKE} -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
+	${MAKE} ARCH=$(KER_ARCH)  -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
+	${MAKE} ARCH=$(KER_ARCH)  -C ${KERNEL_SRC} INSTALL_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/boot/ dtbs_install
 	
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
@@ -114,12 +125,12 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	# remove firmware
 	rm -rf debian/${PVE_KERNEL_PKG}/lib/firmware
 	# strip debug info
-	find debian/${PVE_KERNEL_PKG}/lib/modules -name \*.ko -print | while read f ; do strip --strip-debug "$$f"; done
+	find debian/${PVE_KERNEL_PKG}/lib/modules -name \*.ko -print | while read f ; do ${CROSS_COMPILE}strip --strip-debug "$$f"; done
 	# finalize
 	/sbin/depmod -b debian/${PVE_KERNEL_PKG}/ ${KVNAME}
 	# Autogenerate blacklist for watchdog devices (see README)
 	install -m 0755 -d debian/${PVE_KERNEL_PKG}/lib/modprobe.d
-	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > debian/watchdog-blacklist.tmp
+	ls debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ > debian/watchdog-blacklist.tmp || true
 	echo ipmi_watchdog.ko >> debian/watchdog-blacklist.tmp
 	cat debian/watchdog-blacklist.tmp | sed -e 's/^/blacklist /' -e 's/.ko$$//' | sort -u > debian/${PVE_KERNEL_PKG}/lib/modprobe.d/blacklist_${PVE_KERNEL_PKG}.conf
 	rm -f debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/source
@@ -134,7 +145,11 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 		NO_LIBPYTHON=1 \
 		NO_LIBPERL=1 \
 		NO_LIBCRYPTO=1 \
-		PYTHON=python3
+		ARCH="${KER_ARCH}" \
+		CROSS_COMPILE="${CROSS_COMPILE}" \
+		CC="${PVE_KERNEL_CC}" \
+		PYTHON=python3 \
+		NO_PERF_READ_VDSO32=1
 	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'

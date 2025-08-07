@@ -33,42 +33,42 @@ Build-Depends: asciidoc,
                systemtap-sdt-dev,
                zlib1g-dev,
                zstd
-Build-Conflicts: pve-headers-@KVNAME@,
-Vcs-Git: git://github.com/fabianishere/pve-edge-kernel.git
-Vcs-Browser: https://github.com/fabianishere/pve-edge-kernel
+Build-Conflicts: pve-headers-6.6.0-10-openeuler,
+Vcs-Git: git://github.com/fabianishere/pve-openeuler-kernel.git
+Vcs-Browser: https://github.com/fabianishere/pve-openeuler-kernel
 
-Package: linux-tools-@KVMAJMIN@
+Package: linux-tools-6.6
 Architecture: any
 Section: devel
 Priority: optional
 Depends: linux-base,
          ${misc:Depends},
          ${shlibs:Depends},
-Description: Linux kernel version specific tools for version @KVMAJMIN@
+Description: Linux kernel version specific tools for version 6.6
  This package provides the architecture dependent parts for kernel
  version locked tools (such as perf and x86_energy_perf_policy)
 
-Package: pve-headers-@KVMAJMIN@-edge
+Package: pve-headers-6.6-openeuler
 Architecture: all
 Section: admin
 Priority: optional
-Depends: pve-headers-@KVNAME@,
+Depends: pve-headers-6.6.0-10-openeuler,
 Description: Latest Proxmox Edge Kernel Headers
  This is a metapackage which will install the kernel headers
- for the latest available Proxmox Edge kernel from the @KVMAJMIN@
+ for the latest available Proxmox Edge kernel from the 6.6
  series.
 
-Package: pve-kernel-@KVMAJMIN@-edge
+Package: pve-kernel-6.6-openeuler
 Architecture: all
 Section: admin
 Priority: optional
 Depends: pve-firmware,
-         pve-kernel-@KVNAME@,
+         pve-kernel-6.6.0-10-openeuler,
 Description: Latest Proxmox Edge Kernel Image
  This is a metapackage which will install the latest available
- Proxmox Edge kernel from the @KVMAJMIN@ series.
+ Proxmox Edge kernel from the 6.6 series.
 
-Package: pve-headers-@KVNAME@
+Package: pve-headers-6.6.0-10-openeuler
 Section: devel
 Priority: optional
 Architecture: any
@@ -78,7 +78,7 @@ Depends:
 Description: The Proxmox Edge Kernel Headers
  This package contains the Proxmox Edge Linux kernel headers
 
-Package: pve-kernel-@KVNAME@
+Package: pve-kernel-6.6.0-10-openeuler
 Section: admin
 Priority: optional
 Architecture: any
