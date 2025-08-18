@@ -9,3 +9,4 @@ zfs/0008-Patch-move-manpage-arcstat-1-to-arcstat-8.patch
 zfs/0009-arc-stat-summary-guard-access-to-freshly-introduced-.patch
 zfs/0010-Fix-nfs_truncate_shares-without-etc-exports.d.patch
 zfs/0011-zpool-status-tighten-bounds-for-noalloc-stat-availab.patch
+zfs/0099-CDDL-to-GPL.patch

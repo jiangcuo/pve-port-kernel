@@ -1,5 +1,5 @@
 #!/bin/bash
-hostarch=host
+hostarch=`dpkg-architecture  -qDEB_BUILD_ARCH`
 shell_path=$(realpath $(dirname $0))
 
 os_check(){
@@ -16,7 +16,9 @@ os_check(){
 
 build(){
     cd $shell_path
-    debian/rules debian/control 
+    git submodule update --init --depth=1
+    rm debian/control
+    debian/rules debian/control
     apt update && apt install qemu-user-static python-dev-is-python3 rsync cross-config  -y
 
     rsync -ra scripts linux  debian zfs  build
