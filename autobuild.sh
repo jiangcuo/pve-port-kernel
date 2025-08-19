@@ -19,10 +19,10 @@ build(){
     git submodule update --init --depth=1
     rm debian/control
     debian/rules debian/control
-    apt update && apt install qemu-user-static python-dev-is-python3 rsync cross-config  -y
+    apt update && apt install python-dev-is-python3 rsync cross-config  -y
 
     rsync -ra scripts linux  debian zfs  build
-    apt install asciidoc flex bc bison cpio dwarves flex kmod lz4 quilt xmlto zstd qemu-user-static -y
+    apt install asciidoc flex bc bison cpio dwarves flex kmod lz4 quilt xmlto zstd -y
     apt install -y libbabeltrace-dev:$hostarch \
         libcap-dev:$hostarch \
         libdw-dev:$hostarch \
@@ -45,6 +45,7 @@ build(){
     if [ "$hostarch" == "host" ]; then
       dpkg-buildpackage -us -uc -b 
     else
+      apt install qemu-user-static -y
       dpkg-buildpackage -us -uc -b -a$hostarch -d
     fi
 
