@@ -1,5 +1,6 @@
 #!/bin/bash
 hostarch=`dpkg-architecture  -qDEB_BUILD_ARCH`
+buildarch=`dpkg-architecture  -qDEB_BUILD_ARCH`
 shell_path=$(realpath $(dirname $0))
 
 os_check(){
@@ -38,14 +39,14 @@ build(){
         libperl-dev:$hostarch \
         systemtap-sdt-dev:$hostarch \
         pkg-config:$hostarch \
-        crossbuild-essential-$hostarch \
         libstdc++6:$hostarch
 
     cd build
-    if [ "$hostarch" == "host" ]; then
-      dpkg-buildpackage -us -uc -b 
+
+    if [ "$hostarch" == "$buildarch" ]; then
+      dpkg-buildpackage -us -uc -b
     else
-      apt install qemu-user-static -y
+      apt install qemu-user-static  crossbuild-essential-$hostarch -y
       dpkg-buildpackage -us -uc -b -a$hostarch -d
     fi
 

@@ -116,7 +116,7 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	install -m 644 ${KERNEL_SRC}/System.map debian/${PVE_KERNEL_PKG}/boot/System.map-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/${KERNEL_IMAGE_PATH} debian/${PVE_KERNEL_PKG}/boot/${KERNEL_INSTALL_FILE}-${KVNAME}
 	${MAKE} ARCH=$(KER_ARCH)  -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
-	${MAKE} ARCH=$(KER_ARCH)  -C ${KERNEL_SRC} INSTALL_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/boot/ dtbs_install
+	${MAKE} ARCH=$(KER_ARCH)  -C ${KERNEL_SRC} INSTALL_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/boot/ dtbs_install || true
 	
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
