@@ -15,7 +15,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  rename man/{man1/arcstat.1 => man8/arcstat.8} (99%)
 
 diff --git a/man/Makefile.am b/man/Makefile.am
-index 43bb014dd..a9293468a 100644
+index 6a7b2d3e4..11df2ebf5 100644
 --- a/man/Makefile.am
 +++ b/man/Makefile.am
 @@ -2,7 +2,6 @@ dist_noinst_man_MANS = \
@@ -38,10 +38,10 @@ diff --git a/man/man1/arcstat.1 b/man/man8/arcstat.8
 similarity index 99%
 rename from man/man1/arcstat.1
 rename to man/man8/arcstat.8
-index 82358fa68..a8fb55498 100644
+index f2474fbb7..5ab0018ec 100644
 --- a/man/man1/arcstat.1
 +++ b/man/man8/arcstat.8
-@@ -13,7 +13,7 @@
+@@ -14,7 +14,7 @@
  .\" Copyright (c) 2020 by AJ Jordan. All rights reserved.
  .\"
  .Dd December 23, 2022
