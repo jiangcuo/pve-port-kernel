@@ -7,4 +7,5 @@ zfs/0006-dont-symlink-zed-scripts.patch
 zfs/0007-Add-systemd-unit-for-importing-specific-pools.patch
 zfs/0008-Patch-move-manpage-arcstat-1-to-arcstat-8.patch
 zfs/0009-zpool-status-tighten-bounds-for-noalloc-stat-availab.patch
+zfs/0010-zfs-support-openeuler-new-shrink-abi.patch
 zfs/0099-CDDL-to-GPL.patch
