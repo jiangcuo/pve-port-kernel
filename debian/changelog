@@ -1,3 +1,10 @@
+pve-kernel (6.6.0-4) openeuler; urgency=medium
+
+  * Update Linux to openeuler 20260327
+  * Update zfs to 2.3.6
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Fri, 27 Mar 2026 04:57:45 +0000
+
 pve-kernel (6.6.0-13) openeuler; urgency=medium
 
   * Fix zfs build on openeuler 6.6
