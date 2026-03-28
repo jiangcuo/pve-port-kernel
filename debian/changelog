@@ -1,4 +1,4 @@
-pve-kernel (6.6.0-4) openeuler; urgency=medium
+pve-kernel (6.6.0-14) openeuler; urgency=medium
 
   * Update Linux to openeuler 20260327
   * Update zfs to 2.3.6
