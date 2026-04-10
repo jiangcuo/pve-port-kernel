@@ -2,6 +2,7 @@
 hostarch=`dpkg-architecture  -qDEB_BUILD_ARCH`
 buildarch=`dpkg-architecture  -qDEB_BUILD_ARCH`
 shell_path=$(realpath $(dirname $0))
+VARIANT=${VARIANT:-}
 
 os_check(){
   if [ ! -f /etc/os-release ]; then
@@ -44,11 +45,15 @@ build(){
 
     cd build
 
+    VARIANT_ARGS=""
+    if [ -n "$VARIANT" ]; then
+      VARIANT_ARGS="-eVARIANT=$VARIANT"
+    fi
     if [ "$hostarch" == "$buildarch" ]; then
-      dpkg-buildpackage -us -uc -b
+      dpkg-buildpackage -us -uc -b $VARIANT_ARGS
     else
       apt install qemu-user-static  crossbuild-essential-$hostarch -y
-      dpkg-buildpackage -us -uc -b -a$hostarch -d
+      dpkg-buildpackage -us -uc -b -a$hostarch -d $VARIANT_ARGS
     fi
 
 }
@@ -76,8 +81,12 @@ case $1 in
     x86_64)
     hostarch=amd64
     ;;
+    4k)
+    VARIANT=4k
+    ;;
     help)
-    echo "usage: $0 [clean|arm64|riscv64|loongarch64|x86_64]"
+    echo "usage: $0 [clean|arm64|riscv64|loongarch64|x86_64] [VARIANT=<suffix>]"
+    echo "  or:  VARIANT=4k $0 loongarch64   # build loongarch64 4k page-size kernel"
     exit 1
     ;;
     *)
