@@ -12,3 +12,16 @@ apt install pve-kernel-6.6.0-openeuler #meta package.You can get latest version.
 ```bash
 bash autobuild.sh
 ```
+
+## build in docker
+
+```
+docker run --rm -it -v `pwd`:/data -w /data  \
+--entrypoint bash \
+harbor.lierfang.com/pveport/pvebuilder:aarch64 \
+./autobuild.sh aarch64
+```
+
+## Extra Module
+
+[See this](modules/README.md)

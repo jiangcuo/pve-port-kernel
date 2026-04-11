@@ -80,6 +80,37 @@ override_dh_auto_build:
 		ARCH="${KER_ARCH}" \
 		CROSS_COMPILE="${CROSS_COMPILE}" \
 		CC="${PVE_ZFS_CC}" 
+	# Extra out-of-tree modules (auto-discovered from modules/)
+	# Each module directory must contain a module.conf with: MODSRC=<relative_path_to_kbuild_dir>
+	@for moddir in modules/*/; do \
+		[ -d "$$moddir" ] || continue; \
+		modname=$$(basename $$moddir); \
+		if [ ! -f "$$moddir/module.conf" ]; then \
+			echo "SKIP: $$moddir (no module.conf)"; \
+			continue; \
+		fi; \
+		MODSRC="."; \
+		. "$$moddir/module.conf"; \
+		modsrc="$$moddir/$$MODSRC"; \
+		if [ ! -f "$$modsrc/Makefile" ] && [ ! -f "$$modsrc/Kbuild" ]; then \
+			echo "ERROR: $$modsrc has no Makefile or Kbuild (check MODSRC in module.conf)"; \
+			exit 1; \
+		fi; \
+		echo "=== BUILD MODULE: $$modname from $$modsrc ==="; \
+		${MAKE} -C $$(realpath ${KERNEL_SRC}) \
+			CROSS_COMPILE="${CROSS_COMPILE}" \
+			CC="${PVE_KERNEL_CC}" \
+			HOSTCC=${PVE_KERNEL_CC} \
+			ARCH="${KER_ARCH}" \
+			M=$$(realpath $$modsrc) \
+			modules || exit 1; \
+		kocount=$$(find $$modsrc -name '*.ko' | wc -l); \
+		if [ "$$kocount" -eq 0 ]; then \
+			echo "ERROR: $$modname built zero .ko files — check module.conf MODSRC path"; \
+			exit 1; \
+		fi; \
+		echo "=== $$modname: $$kocount .ko file(s) built ==="; \
+	done
 
 override_dh_auto_install: debian/SOURCE .install_mark .tools_install_mark .headers_install_mark .usr_headers_install_mark
 	dh_installdocs -A debian/copyright debian/SOURCE
@@ -126,6 +157,17 @@ debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	install -m 644 ${ZFS_SRC}/module/zfs.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	install -m 644 ${ZFS_SRC}/module/spl.ko debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
+	# install extra out-of-tree modules
+	@for moddir in modules/*/; do \
+		[ -d "$$moddir" ] || continue; \
+		modname=$$(basename $$moddir); \
+		[ -f "$$moddir/module.conf" ] || continue; \
+		MODSRC="."; \
+		. "$$moddir/module.conf"; \
+		modsrc="$$moddir/$$MODSRC"; \
+		install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/extra/$$modname; \
+		find $$modsrc -name '*.ko' -exec install -m 644 {} debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/extra/$$modname/ \;; \
+	done
 	# remove firmware
 	rm -rf debian/${PVE_KERNEL_PKG}/lib/firmware
 	# strip debug info
