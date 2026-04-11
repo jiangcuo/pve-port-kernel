@@ -1,3 +1,10 @@
+pve-kernel (6.6.0-15) openeuler; urgency=medium
+
+  * Add extra modules support
+  * Update Linux to openeuler 6.6.0-145.0.2
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Sat, 11 Apr 2026 01:12:07 +0000
+
 pve-kernel (6.6.0-14) openeuler; urgency=medium
 
   * Update Linux to openeuler 20260327
