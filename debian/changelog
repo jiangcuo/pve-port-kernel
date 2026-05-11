@@ -1,3 +1,11 @@
+pve-kernel (6.6.0-17) openeuler; urgency=medium
+
+  * Updae Linux to openeuler 6.6.0-152.0.0
+  
+  * Disable CGROUP_XCU and CGROUP_DMEM
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Mon, 11 May 2026 12:53:15 +0000
+
 pve-kernel (6.6.0-16) openeuler; urgency=medium
 
   * Updae Linux to openeuler 6.6.0-150.0.0, Fix CVE-2026-31431
