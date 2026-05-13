@@ -1,2 +1,3 @@
 pve/0001-Make-mkcompile_h-accept-an-alternate-timestamp-strin.patch
 pve/0002-gcc14.patch
+pve/003-override_for_missing_acs_capabilities.patch
