@@ -15,7 +15,7 @@ ZFS_SRC := zfs
 ifeq ($(DEB_HOST_ARCH),loong64)
 DEF_CONFIG := loongson3_defconfig
 else
-DEF_CONFIG := openeuler_defconfig
+DEF_CONFIG := defconfig
 endif
 
 %:

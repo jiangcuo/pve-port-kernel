@@ -1,15 +1,15 @@
 #!/bin/bash
-# Script for parsing version information in the repository
+# Script for parsing version information from debian/changelog
 set -e
 set -o pipefail
 
-LINUX_REPOSITORY=linux
-LINUX_VERSION=$(sed -n "s/^VERSION = \([0-9]*$\)/\1/p" < linux/Makefile | xargs)
-LINUX_PATCHLEVEL=$(sed -n "s/^PATCHLEVEL = \([0-9]*$\)/\1/p" < linux/Makefile | xargs)
-LINUX_SUBLEVEL=$(sed -n "s/^SUBLEVEL = \([0-9]*$\)/\1/p" < linux/Makefile | xargs)
-LINUX_VERSION_FULL=$LINUX_VERSION.$LINUX_PATCHLEVEL.$LINUX_SUBLEVEL
 PACKAGE_VERSION=$(dpkg-parsechangelog -SVersion)
-PACKAGE_RELEASE=$(echo $PACKAGE_VERSION | sed -n 's/^.*-\([0-9]*\).*$/\1/p' | xargs)
+KERNEL_VER=$(echo "$PACKAGE_VERSION" | sed 's/-[^-]*$//')
+PACKAGE_RELEASE=$(echo "$PACKAGE_VERSION" | sed 's/.*-//')
+KERNEL_MAJMIN=$(echo "$KERNEL_VER" | cut -d. -f1-2)
+LINUX_VERSION=$(echo "$KERNEL_VER" | cut -d. -f1)
+LINUX_PATCHLEVEL=$(echo "$KERNEL_VER" | cut -d. -f2)
+LINUX_SUBLEVEL=$(echo "$KERNEL_VER" | cut -d. -f3)
 
 while getopts "MmnprdLh" OPTION; do
     case $OPTION in
@@ -22,7 +22,7 @@ while getopts "MmnprdLh" OPTION; do
         exit 0
         ;;
     n)
-        echo $LINUX_VERSION.$LINUX_PATCHLEVEL
+        echo $KERNEL_MAJMIN
         exit 0
         ;;
     p)
@@ -34,17 +34,17 @@ while getopts "MmnprdLh" OPTION; do
         exit 0
         ;;
     L)
-        echo $LINUX_VERSION_FULL
+        echo $KERNEL_VER
         exit 0
         ;;
     h)
         echo "version.sh [-Mmnprfh]"
         echo "  -M  major version"
         echo "  -m  minor version"
-        echo "  -n  major minor version"
-        echo "  -p  patch version"
+        echo "  -n  major.minor version"
+        echo "  -p  patch version (sublevel)"
         echo "  -r  package release"
-        echo "  -L  Linux version"
+        echo "  -L  full kernel version"
         echo "  -h  this help message"
         exit 1
         ;;
