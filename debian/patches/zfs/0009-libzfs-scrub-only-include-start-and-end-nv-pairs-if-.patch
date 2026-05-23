@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stoiko Ivanov <s.ivanov@proxmox.com>
+Date: Wed, 11 Mar 2026 12:56:12 +0100
+Subject: [PATCH] libzfs: scrub: only include start and end nv pairs if needed
+ for scrub
+
+This patch addresses running `zpool scrub <pool>` with ZFS 2.4 userspace
+while the loaded kernel module is still 2.3, failing with:
+```
+cannot scrub <pool>: the loaded zfs module does not support an option
+for this operation. A reboot may be required to enable this option.
+```
+
+Checking for the source of the message via `strace` showed the scrub
+ioctl failing and setting errno to ZFS_ERR_IOC_ARG_UNAVAIL[0]. With
+that and the comments in `module/zfs/zfs_ioctl.c`[1] commit: 894edd084
+seemed like a likely cause for the backward incompatibility.
+
+The corresponding kernelspace code in `module/zfs/zfs_ioctl.c` defaults
+to a setting of 0 if either parameter is not set, so not providing the
+nvpairs in case both are 0 should not make a semantic difference.
+
+Tested by:
+* loading zfs.ko in version 2.3.6
+* running `zpool scrub testpool` with zpool from master (error occurs)
+* running `zpool scrub testpool` with this patch applied (scrub is
+  started)
+
+This should help users who are still stuck on an older kernel module,
+while their distribution ships newer ZFS userspace.
+
+This was observed in the Proxmox community forum:
+https://forum.proxmox.com/threads/.180467/
+
+[0] https://github.com/openzfs/zfs/blob/d35951b18d6e12afeb0d5b0539ff2467ab4bfbcf/include/sys/fs/zfs.h#L1762
+[1] https://github.com/openzfs/zfs/blob/d35951b18d6e12afeb0d5b0539ff2467ab4bfbcf/module/zfs/zfs_ioctl.c#L7799
+Fixes: 894edd084 ("Add TXG timestamp database")
+Signed-off-by: Stoiko Ivanov <s.ivanov@proxmox.com>
+---
+ lib/libzfs/libzfs_pool.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/lib/libzfs/libzfs_pool.c b/lib/libzfs/libzfs_pool.c
+index 42a1ddcf28a62efb17f45d1a7870248bcdbb7ca3..9420c346431d7841a8edebf5e60075a6cfd1516f 100644
+--- a/lib/libzfs/libzfs_pool.c
++++ b/lib/libzfs/libzfs_pool.c
+@@ -2797,8 +2797,11 @@ zpool_scan_range(zpool_handle_t *zhp, pool_scan_func_t func,
+ 	nvlist_t *args = fnvlist_alloc();
+ 	fnvlist_add_uint64(args, "scan_type", (uint64_t)func);
+ 	fnvlist_add_uint64(args, "scan_command", (uint64_t)cmd);
+-	fnvlist_add_uint64(args, "scan_date_start", (uint64_t)date_start);
+-	fnvlist_add_uint64(args, "scan_date_end", (uint64_t)date_end);
++	if (date_start != 0 || date_end != 0) {
++		fnvlist_add_uint64(args, "scan_date_start",
++		    (uint64_t)date_start);
++		fnvlist_add_uint64(args, "scan_date_end", (uint64_t)date_end);
++	}
+ 
+ 	err = lzc_scrub(ZFS_IOC_POOL_SCRUB, zhp->zpool_name, args, NULL);
+ 	fnvlist_free(args);

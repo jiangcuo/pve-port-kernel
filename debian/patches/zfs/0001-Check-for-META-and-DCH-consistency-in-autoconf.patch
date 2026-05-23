@@ -10,10 +10,11 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/config/zfs-meta.m4 b/config/zfs-meta.m4
-index 20064a0fb..4d5f545ad 100644
+index 72d424e2d47873c0049c2039c4b01a22eafad3ef..3e0943c797a35c7792e105206f68a3eff3e7d9d7 100644
 --- a/config/zfs-meta.m4
 +++ b/config/zfs-meta.m4
-@@ -1,9 +1,10 @@
+@@ -1,10 +1,11 @@
+ dnl # SPDX-License-Identifier: CDDL-1.0
  dnl #
  dnl # DESCRIPTION:
 -dnl # Read meta data from the META file.  When building from a git repository
@@ -28,7 +29,7 @@ index 20064a0fb..4d5f545ad 100644
  dnl #
  dnl #    The META file format is as follows:
  dnl #      ^[ ]*KEY:[ \t]+VALUE$
-@@ -49,6 +50,7 @@ AC_DEFUN([ZFS_AC_META], [
+@@ -50,6 +51,7 @@ AC_DEFUN([ZFS_AC_META], [
  	_zfs_ac_meta_type="none"
  	if test -f "$META"; then
  		_zfs_ac_meta_type="META file"
@@ -36,7 +37,7 @@ index 20064a0fb..4d5f545ad 100644
  
  		ZFS_META_NAME=_ZFS_AC_META_GETVAL([(Name|Project|Package)]);
  		if test -n "$ZFS_META_NAME"; then
-@@ -69,8 +71,30 @@ AC_DEFUN([ZFS_AC_META], [
+@@ -70,8 +72,30 @@ AC_DEFUN([ZFS_AC_META], [
  			AC_SUBST([ZFS_META_VERSION])
  		fi
  

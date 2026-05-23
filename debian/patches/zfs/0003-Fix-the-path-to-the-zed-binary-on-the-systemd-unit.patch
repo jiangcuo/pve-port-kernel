@@ -13,7 +13,7 @@ Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/etc/systemd/system/zfs-zed.service.in b/etc/systemd/system/zfs-zed.service.in
-index be2fc6734..7606604ec 100644
+index be2fc67348f937b074554377f46d51ef81ef5105..7606604ec0251a1239e078dc15fd969a584bb843 100644
 --- a/etc/systemd/system/zfs-zed.service.in
 +++ b/etc/systemd/system/zfs-zed.service.in
 @@ -5,7 +5,7 @@ ConditionPathIsDirectory=/sys/module/zfs

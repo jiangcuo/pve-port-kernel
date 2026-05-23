@@ -1,0 +1,306 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Idefix2020 <idefix2020dev@gmail.com>
+Date: Fri, 6 Mar 2026 00:08:17 +0100
+Subject: [PATCH] Add --no-preserve-encryption flag
+
+* Add an option to send datasets with params or replicate
+without preserving encryption
+* Add a test case for the new functionality
+
+Reviewed-by: Paul Dagnelie <paul.dagnelie@klarasystems.com>
+Reviewed-by: Brian Behlendorf <behlendorf1@llnl.gov>
+Reviewed-by: Alexander Motin <alexander.motin@TrueNAS.com>
+Signed-off-by: Chris Jacobs <idefix2020dev@gmail.com>
+Closes #18240
+---
+ cmd/zfs/zfs_main.c                            | 10 ++--
+ include/libzfs.h                              |  3 ++
+ lib/libzfs/libzfs_sendrecv.c                  | 46 +++++++++++++------
+ man/man8/zfs-send.8                           | 17 +++++--
+ .../functional/rsend/send_encrypted_props.ksh |  8 ++++
+ 5 files changed, 62 insertions(+), 22 deletions(-)
+
+diff --git a/cmd/zfs/zfs_main.c b/cmd/zfs/zfs_main.c
+index ce948951a028a22ba21aba87035ae4b64b443fb9..7cd9a3479d549973ff842386f760b27ab9ad5636 100644
+--- a/cmd/zfs/zfs_main.c
++++ b/cmd/zfs/zfs_main.c
+@@ -345,10 +345,10 @@ get_usage(zfs_help_t idx)
+ 	case HELP_ROLLBACK:
+ 		return (gettext("\trollback [-rRf] <snapshot>\n"));
+ 	case HELP_SEND:
+-		return (gettext("\tsend [-DLPbcehnpsVvw] "
++		return (gettext("\tsend [-DLPbcehnpsUVvw] "
+ 		    "[-i|-I snapshot]\n"
+ 		    "\t     [-R [-X dataset[,dataset]...]]     <snapshot>\n"
+-		    "\tsend [-DnVvPLecw] [-i snapshot|bookmark] "
++		    "\tsend [-DnVvPLecwU] [-i snapshot|bookmark] "
+ 		    "<filesystem|volume|snapshot>\n"
+ 		    "\tsend [-DnPpVvLec] [-i bookmark|snapshot] "
+ 		    "--redact <bookmark> <snapshot>\n"
+@@ -4784,11 +4784,12 @@ zfs_do_send(int argc, char **argv)
+ 		{"holds",	no_argument,		NULL, 'h'},
+ 		{"saved",	no_argument,		NULL, 'S'},
+ 		{"exclude",	required_argument,	NULL, 'X'},
++		{"no-preserve-encryption",	no_argument,	NULL, 'U'},
+ 		{0, 0, 0, 0}
+ 	};
+ 
+ 	/* check options */
+-	while ((c = getopt_long(argc, argv, ":i:I:RsDpVvnPLeht:cwbd:SX:",
++	while ((c = getopt_long(argc, argv, ":i:I:RsDpVvnPLeht:cwbd:SX:U",
+ 	    long_options, NULL)) != -1) {
+ 		switch (c) {
+ 		case 'X':
+@@ -4874,6 +4875,9 @@ zfs_do_send(int argc, char **argv)
+ 		case 'S':
+ 			flags.saved = B_TRUE;
+ 			break;
++		case 'U':
++			flags.no_preserve_encryption = B_TRUE;
++			break;
+ 		case ':':
+ 			/*
+ 			 * If a parameter was not passed, optopt contains the
+diff --git a/include/libzfs.h b/include/libzfs.h
+index 14930fb90622b706d7c45991817746a61e0fdd2d..c67d5f353e99b4273728ccffde1f4db6db77835b 100644
+--- a/include/libzfs.h
++++ b/include/libzfs.h
+@@ -845,6 +845,9 @@ typedef struct sendflags {
+ 
+ 	/* stream represents a partially received dataset */
+ 	boolean_t saved;
++
++	/* allow sending datasets with props, without preserving encryption */
++	boolean_t no_preserve_encryption;
+ } sendflags_t;
+ 
+ typedef boolean_t (snapfilter_cb_t)(zfs_handle_t *, void *);
+diff --git a/lib/libzfs/libzfs_sendrecv.c b/lib/libzfs/libzfs_sendrecv.c
+index 2c38333e18a19c4750f6219d11020096581fbb1d..fb446516d81563227664e9dc039abc2fcaa7e7e0 100644
+--- a/lib/libzfs/libzfs_sendrecv.c
++++ b/lib/libzfs/libzfs_sendrecv.c
+@@ -258,6 +258,7 @@ typedef struct send_data {
+ 	boolean_t seento;
+ 	boolean_t holds;	/* were holds requested with send -h */
+ 	boolean_t props;
++	boolean_t no_preserve_encryption;
+ 
+ 	/*
+ 	 * The header nvlist is of the following format:
+@@ -587,20 +588,32 @@ send_iterate_fs(zfs_handle_t *zhp, void *arg)
+ 			fnvlist_add_boolean(nvfs, "is_encroot");
+ 
+ 		/*
+-		 * Encrypted datasets can only be sent with properties if
+-		 * the raw flag is specified because the receive side doesn't
+-		 * currently have a mechanism for recursively asking the user
+-		 * for new encryption parameters.
++		 * Encrypted datasets can only be sent with properties if the
++		 * raw flag or the no-preserve-encryption flag are specified
++		 * because the receive side doesn't currently have a mechanism
++		 * for recursively asking the user for new encryption
++		 * parameters.
++		 * We allow sending the dataset unencrypted only if the user
++		 * explicitly sets the no-preserve-encryption flag.
+ 		 */
+-		if (!sd->raw) {
++		if (!sd->raw && !sd->no_preserve_encryption) {
+ 			(void) fprintf(stderr, dgettext(TEXT_DOMAIN,
+ 			    "cannot send %s@%s: encrypted dataset %s may not "
+-			    "be sent with properties without the raw flag\n"),
++			    "be sent with properties without the raw flag or "
++			    "no-preserve-encryption flag\n"),
+ 			    sd->fsname, sd->tosnap, zhp->zfs_name);
+ 			rv = -1;
+ 			goto out;
+ 		}
+ 
++		/* If no-preserve-encryption flag is set, warn the user again */
++		if (!sd->raw && sd->no_preserve_encryption) {
++			(void) fprintf(stderr, dgettext(TEXT_DOMAIN,
++			    "WARNING: no-preserve-encryption flag set, sending "
++			    "dataset %s without encryption\n"),
++			    zhp->zfs_name);
++		}
++
+ 	}
+ 
+ 	/*
+@@ -683,8 +696,8 @@ static int
+ gather_nvlist(libzfs_handle_t *hdl, const char *fsname, const char *fromsnap,
+     const char *tosnap, boolean_t recursive, boolean_t raw, boolean_t doall,
+     boolean_t replicate, boolean_t skipmissing, boolean_t verbose,
+-    boolean_t backup, boolean_t holds, boolean_t props, nvlist_t **nvlp,
+-    avl_tree_t **avlp)
++    boolean_t backup, boolean_t holds, boolean_t props,
++	boolean_t no_preserve_encryption, nvlist_t **nvlp, avl_tree_t **avlp)
+ {
+ 	zfs_handle_t *zhp;
+ 	send_data_t sd = { 0 };
+@@ -707,6 +720,7 @@ gather_nvlist(libzfs_handle_t *hdl, const char *fsname, const char *fromsnap,
+ 	sd.backup = backup;
+ 	sd.holds = holds;
+ 	sd.props = props;
++	sd.no_preserve_encryption = no_preserve_encryption;
+ 
+ 	if ((error = send_iterate_fs(zhp, &sd)) != 0) {
+ 		fnvlist_free(sd.fss);
+@@ -2199,7 +2213,7 @@ send_prelim_records(zfs_handle_t *zhp, const char *from, int fd,
+     boolean_t gather_props, boolean_t recursive, boolean_t verbose,
+     boolean_t dryrun, boolean_t raw, boolean_t replicate, boolean_t skipmissing,
+     boolean_t backup, boolean_t holds, boolean_t props, boolean_t doall,
+-    nvlist_t **fssp, avl_tree_t **fsavlp)
++    boolean_t no_preserve_encryption, nvlist_t **fssp, avl_tree_t **fsavlp)
+ {
+ 	int err = 0;
+ 	char *packbuf = NULL;
+@@ -2245,7 +2259,8 @@ send_prelim_records(zfs_handle_t *zhp, const char *from, int fd,
+ 
+ 		if (gather_nvlist(zhp->zfs_hdl, tofs,
+ 		    from, tosnap, recursive, raw, doall, replicate, skipmissing,
+-		    verbose, backup, holds, props, &fss, fsavlp) != 0) {
++		    verbose, backup, holds, props, no_preserve_encryption,
++		    &fss, fsavlp) != 0) {
+ 			return (zfs_error(zhp->zfs_hdl, EZFS_BADBACKUP,
+ 			    errbuf));
+ 		}
+@@ -2392,7 +2407,7 @@ zfs_send_cb_impl(zfs_handle_t *zhp, const char *fromsnap, const char *tosnap,
+ 		    flags->replicate, flags->verbosity > 0, flags->dryrun,
+ 		    flags->raw, flags->replicate, flags->skipmissing,
+ 		    flags->backup, flags->holds, flags->props, flags->doall,
+-		    &fss, &fsavl);
++		    flags->no_preserve_encryption, &fss, &fsavl);
+ 		zfs_close(tosnap);
+ 		if (err != 0)
+ 			goto err_out;
+@@ -2735,7 +2750,8 @@ zfs_send_one_cb_impl(zfs_handle_t *zhp, const char *from, int fd,
+ 		err = send_prelim_records(zhp, NULL, fd, B_TRUE, B_FALSE,
+ 		    flags->verbosity > 0, flags->dryrun, flags->raw,
+ 		    flags->replicate, B_FALSE, flags->backup, flags->holds,
+-		    flags->props, flags->doall, NULL, NULL);
++		    flags->props, flags->doall, flags->no_preserve_encryption,
++		    NULL, NULL);
+ 		if (err != 0)
+ 			return (err);
+ 	}
+@@ -3392,7 +3408,7 @@ recv_fix_encryption_hierarchy(libzfs_handle_t *hdl, const char *top_zfs,
+ 	/* Using top_zfs, gather the nvlists for all local filesystems. */
+ 	if ((err = gather_nvlist(hdl, top_zfs, NULL, NULL,
+ 	    recursive, B_TRUE, B_FALSE, recursive, B_FALSE, B_FALSE, B_FALSE,
+-	    B_FALSE, B_TRUE, &local_nv, &local_avl)) != 0)
++	    B_FALSE, B_TRUE, B_FALSE, &local_nv, &local_avl)) != 0)
+ 		return (err);
+ 
+ 	/*
+@@ -3547,7 +3563,7 @@ again:
+ 
+ 	if ((error = gather_nvlist(hdl, tofs, fromsnap, NULL,
+ 	    recursive, B_TRUE, B_FALSE, recursive, B_FALSE, B_FALSE, B_FALSE,
+-	    B_FALSE, B_TRUE, &local_nv, &local_avl)) != 0)
++	    B_FALSE, B_TRUE, B_FALSE, &local_nv, &local_avl)) != 0)
+ 		return (error);
+ 
+ 	/*
+@@ -5138,7 +5154,7 @@ zfs_receive_one(libzfs_handle_t *hdl, int infd, const char *tosnap,
+ 		*cp = '\0';
+ 		if (gather_nvlist(hdl, destsnap, NULL, NULL, B_FALSE, B_TRUE,
+ 		    B_FALSE, B_FALSE, B_FALSE, B_FALSE, B_FALSE, B_FALSE,
+-		    B_TRUE, &local_nv, &local_avl) == 0) {
++		    B_TRUE, B_FALSE, &local_nv, &local_avl) == 0) {
+ 			*cp = '@';
+ 			fs = fsavl_find(local_avl, drrb->drr_toguid, NULL);
+ 			fsavl_destroy(local_avl);
+diff --git a/man/man8/zfs-send.8 b/man/man8/zfs-send.8
+index 6c5f6b94afd5beb8389a31910c8f146f861ecade..07952e8f4366481d91f37e213aeb134362a8ed0d 100644
+--- a/man/man8/zfs-send.8
++++ b/man/man8/zfs-send.8
+@@ -31,7 +31,7 @@
+ .\" Copyright 2019 Joyent, Inc.
+ .\" Copyright (c) 2024, Klara, Inc.
+ .\"
+-.Dd August 29, 2025
++.Dd February 20, 2026
+ .Dt ZFS-SEND 8
+ .Os
+ .
+@@ -41,13 +41,13 @@
+ .Sh SYNOPSIS
+ .Nm zfs
+ .Cm send
+-.Op Fl DLPVbcehnpsvw
++.Op Fl DLPUVbcehnpsvw
+ .Op Fl R Op Fl X Ar dataset Ns Oo , Ns Ar dataset Oc Ns …
+ .Op Oo Fl I Ns | Ns Fl i Oc Ar snapshot
+ .Ar snapshot
+ .Nm zfs
+ .Cm send
+-.Op Fl DLPVcensvw
++.Op Fl DLPUVcensvw
+ .Op Fl i Ar snapshot Ns | Ns Ar bookmark
+ .Ar filesystem Ns | Ns Ar volume Ns | Ns Ar snapshot
+ .Nm zfs
+@@ -75,7 +75,7 @@
+ .It Xo
+ .Nm zfs
+ .Cm send
+-.Op Fl DLPVbcehnpsvw
++.Op Fl DLPUVbcehnpsvw
+ .Op Fl R Op Fl X Ar dataset Ns Oo , Ns Ar dataset Oc Ns …
+ .Op Oo Fl I Ns | Ns Fl i Oc Ar snapshot
+ .Ar snapshot
+@@ -146,6 +146,8 @@ If the
+ .Fl R
+ flag is used to send encrypted datasets, then
+ .Fl w
++or
++.Fl U
+ must also be specified.
+ .It Fl V , -proctitle
+ Set the process title to a per-second report of how much data has been sent.
+@@ -293,6 +295,8 @@ is specified.
+ The receiving system must also support this feature.
+ Sends of encrypted datasets must use
+ .Fl w
++or
++.Fl U
+ when using this flag.
+ .It Fl s , -skip-missing
+ Allows sending a replication stream even when there are snapshots missing in the
+@@ -303,6 +307,11 @@ belongs
+ and its descendants are skipped.
+ This flag can only be used in conjunction with
+ .Fl R .
++.It Fl U , -no-preserve-encryption
++Allow sending an encrypted dataset with properties, but without keeping
++encryption.
++When this flag is specified, encrypted datasets that would otherwise be blocked
++from sending are sent as unencrypted data.
+ .It Fl v , -verbose
+ Print verbose information about the stream package generated.
+ This information includes a per-second report of how much data has been sent.
+diff --git a/tests/zfs-tests/tests/functional/rsend/send_encrypted_props.ksh b/tests/zfs-tests/tests/functional/rsend/send_encrypted_props.ksh
+index 1e7ca56a143ef2a12064da81c7d9dc58a126b9d3..0c9006d9be4674240c34291f91fc880a3505e4af 100755
+--- a/tests/zfs-tests/tests/functional/rsend/send_encrypted_props.ksh
++++ b/tests/zfs-tests/tests/functional/rsend/send_encrypted_props.ksh
+@@ -41,6 +41,7 @@
+ #    encryption child
+ # 10. Verify that an unencrypted recursive send can be received as an
+ #     encryption child
++# 11. Verify an encrypted pool can be sent with props only when -U is set
+ #
+ 
+ verify_runnable "both"
+@@ -119,6 +120,13 @@ log_mustnot eval "zfs send -i $esnap $esnap2 |" \
+ 	"zfs recv -o pbkdf2iters=100k $TESTPOOL/recv"
+ log_must zfs destroy -r $TESTPOOL/recv
+ 
++# The user has to explicitly allow sending a dataset unecrypted when sending
++# an encrypted dataset with properties
++log_note "Must not be able to send an encrypted dataset with props unless the -U flag is set"
++log_mustnot eval "zfs send -p $esnap | zfs recv $TESTPOOL/recv"
++log_must eval "zfs send -p -U $esnap | zfs recv $TESTPOOL/recv"
++log_must zfs destroy -r $TESTPOOL/recv
++
+ # Test that we can receive a simple stream as an encryption root.
+ log_note "Must be able to receive stream as encryption root"
+ ds=$TESTPOOL/recv
