@@ -4,3 +4,7 @@ build
 config*.org
 *.deb
 *.ddeb
+
+# RPM build artifacts
+_rpmbuild/
+*.rpm
