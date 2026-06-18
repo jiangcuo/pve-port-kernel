@@ -112,7 +112,17 @@ fi
 
 # 验证 linux 源码存在
 if [[ ! -f "linux/Makefile" ]]; then
-    echo "ERROR: linux/Makefile not found. Run: git submodule update --init --depth=1" >&2
+    echo "ERROR: linux/Makefile not found. Run: git submodule update --init --depth=1 linux" >&2
+    exit 1
+fi
+
+if [[ ! -f "zfs/META" ]]; then
+    git submodule update --init --depth=1
+fi
+
+# 验证 linux 源码存在
+if [[ ! -f "zfs/META" ]]; then
+    echo "ERROR: zfs/META not found. Run: git submodule update --init --depth=1 zfs" >&2
     exit 1
 fi
 
@@ -125,23 +135,24 @@ TARBALL_NAME="pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}.tar.gz"
 TARBALL_PATH="$SOURCES_DIR/$TARBALL_NAME"
 
 if [[ -f "$TARBALL_PATH" ]]; then
-    echo "    Tarball already exists, skip (delete _rpmbuild/SOURCES/ to regenerate)"
-else
-    echo "    Creating tarball directly from source tree (this may take a while) ..."
-    # 直接用 tar 打包，通过 --transform 重命名顶层目录，避免中间 rsync 复制
-    tar -czf "$TARBALL_PATH" \
-        --transform="s|^linux/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/linux/|" \
-        --transform="s|^zfs/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/zfs/|" \
-        --transform="s|^debian/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/debian/|" \
-        --transform="s|^scripts/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/scripts/|" \
-        --transform="s|^modules/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/modules/|" \
-        --exclude='.git' \
-        --exclude='linux/.git' \
-        --exclude='zfs/.git' \
-        linux/ zfs/ debian/ scripts/ modules/
-
-    echo "    Created: $TARBALL_PATH ($(du -h "$TARBALL_PATH" | cut -f1))"
+    rm "$TARBALL_PATH"
 fi
+
+echo "    Creating tarball directly from source tree (this may take a while) ..."
+# 直接用 tar 打包，通过 --transform 重命名顶层目录，避免中间 rsync 复制
+tar -czf "$TARBALL_PATH" \
+    --transform="s|^linux/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/linux/|" \
+    --transform="s|^zfs/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/zfs/|" \
+    --transform="s|^debian/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/debian/|" \
+    --transform="s|^scripts/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/scripts/|" \
+    --transform="s|^modules/|pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}/modules/|" \
+    --exclude='.git' \
+    --exclude='linux/.git' \
+    --exclude='zfs/.git' \
+    linux/ zfs/ debian/ scripts/ modules/
+
+echo "    Created: $TARBALL_PATH ($(du -h "$TARBALL_PATH" | cut -f1))"
+
 
 # 复制 spec
 cp "$SPEC_FILE" "$SPECS_DIR/"
