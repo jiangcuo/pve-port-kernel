@@ -129,18 +129,10 @@ if [[ "$DO_DEPS" == "1" && "$SRPM_ONLY" == "0" ]]; then
     [[ $EUID -ne 0 ]] && SUDO="sudo"
 
     if command -v dnf >/dev/null 2>&1; then
-        $SUDO dnf builddep -y --spec "$SPEC_FILE" || {
-            echo "warning: dnf builddep failed, falling back to manual install" >&2
-            $SUDO dnf install -y \
-                gcc gcc-c++ make bc bison flex openssl-devel elfutils-libelf-devel \
-                dwarves perl-interpreter python3 rsync kmod zstd lz4 xz \
-                hostname net-tools elfutils-devel numactl-devel libunwind-devel \
-                libcap-devel slang-devel libzstd-devel perl-devel systemtap-sdt-devel \
-                autoconf automake libtool libuuid-devel libblkid-devel \
-                libtirpc-devel libaio-devel ncompress rpm-build || true
-        }
+        $SUDO dnf builddep -y --spec "$SPEC_FILE"
     else
-        echo "warning: dnf not found, skipping dependency install" >&2
+        echo "error: dnf not found, cannot install dependencies" >&2
+        exit 1
     fi
 else
     echo "==> [3/5] Skipping dependency install"

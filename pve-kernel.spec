@@ -55,10 +55,10 @@
 %global kvname          %{kernel_version}-%{pkg_release}-%{pkg_distro}
 %global extraversion    -%{pkg_release}-%{pkg_distro}
 
-Name:           pve-kernel
+Name:           pve-kernel-%{kvname}
 Version:        %{kernel_version}
 Release:        %{pkg_release}%{?dist}
-Summary:        PVE Port Kernel based on openEuler %{kernel_major}.%{kernel_minor}
+Summary:        PVE Port Kernel %{kvname}
 
 License:        GPL-2.0-only
 URL:            https://github.com/jiangcuo/pve-port-kernel
@@ -79,6 +79,7 @@ BuildRequires:  elfutils-libelf-devel
 BuildRequires:  dwarves
 BuildRequires:  perl-interpreter
 BuildRequires:  python3
+BuildRequires:  python3-devel
 BuildRequires:  rsync
 BuildRequires:  kmod
 BuildRequires:  zstd
@@ -114,14 +115,14 @@ PVE Port Kernel %{kvname} based on openEuler %{kernel_major}.%{kernel_minor}.
 Includes ZFS kernel modules and PVE-specific patches.
 Supports x86_64, aarch64, loongarch64, and riscv64.
 
-%package -n     pve-kernel-%{kernel_major}.%{kernel_minor}
-Summary:        Latest PVE Port Kernel Image for the %{kernel_major}.%{kernel_minor} series
-Requires:       pve-kernel = %{version}-%{release}
+%package -n     pve-kernel-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
+Summary:        Latest PVE Port Kernel for the %{kernel_major}.%{kernel_minor}-%{pkg_distro} series
+Requires:       pve-kernel-%{kvname} = %{version}-%{release}
 AutoReqProv:    no
 
-%description -n pve-kernel-%{kernel_major}.%{kernel_minor}
+%description -n pve-kernel-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
 This is a metapackage which will install the latest available
-PVE Port kernel image from the %{kernel_major}.%{kernel_minor} series.
+PVE Port kernel from the %{kernel_major}.%{kernel_minor}-%{pkg_distro} series.
 
 %package -n     pve-headers-%{kvname}
 Summary:        Kernel headers for pve-kernel %{kvname}
@@ -132,14 +133,14 @@ AutoReqProv:    no
 Linux kernel headers for building external modules against
 pve-kernel %{kvname}.
 
-%package -n     pve-headers-%{kernel_major}.%{kernel_minor}
-Summary:        Latest PVE Port Kernel Headers for the %{kernel_major}.%{kernel_minor} series
+%package -n     pve-headers-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
+Summary:        Latest PVE Port Kernel Headers for the %{kernel_major}.%{kernel_minor}-%{pkg_distro} series
 Requires:       pve-headers-%{kvname} = %{version}-%{release}
 AutoReqProv:    no
 
-%description -n pve-headers-%{kernel_major}.%{kernel_minor}
+%description -n pve-headers-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
 This is a metapackage which will install the kernel headers for the
-latest available PVE Port kernel from the %{kernel_major}.%{kernel_minor} series.
+latest available PVE Port kernel from the %{kernel_major}.%{kernel_minor}-%{pkg_distro} series.
 
 %package -n     pve-kernel-libc-dev
 Summary:        Linux kernel headers for userspace development
@@ -326,25 +327,50 @@ install -m 755 linux/tools/perf/perf \
     %{buildroot}%{_bindir}/perf_%{kernel_major}.%{kernel_minor}
 
 %post
+# Skip during Proxmox installer
+[ -e /proxmox_install_mode ] && exit 0
+
 /sbin/depmod %{kvname} || true
+
+# Generate initramfs (must happen before hooks sync it to ESP)
+if command -v dracut >/dev/null 2>&1; then
+    dracut --force /boot/initramfs-%{kvname}.img %{kvname}
+fi
+
+# Run postinst.d hooks (e.g. zz-proxmox-boot syncs kernel+initrd to ESP)
 if [ -d /etc/kernel/postinst.d ]; then
-    run-parts --verbose --exit-on-error \
-        --arg=%{kvname} \
-        --arg=/boot/%{kernel_install_file}-%{kvname} \
-        /etc/kernel/postinst.d || true
+    for script in /etc/kernel/postinst.d/*; do
+        [ -x "$script" ] && "$script" %{kvname} /boot/%{kernel_install_file}-%{kvname} || true
+    done
+fi
+
+
+%preun
+# Only run on actual removal ($1=0), skip on upgrade ($1=1)
+if [ "$1" = "0" ]; then
+    [ -e /proxmox_install_mode ] && exit 0
+    if [ -d /etc/kernel/prerm.d ]; then
+        for script in /etc/kernel/prerm.d/*; do
+            [ -x "$script" ] && "$script" %{kvname} /boot/%{kernel_install_file}-%{kvname} || true
+        done
+    fi
 fi
 
 %postun
+# Only run on actual removal ($1=0), skip on upgrade ($1=1)
 if [ "$1" = "0" ]; then
+    [ -e /proxmox_install_mode ] && exit 0
     if [ -d /etc/kernel/postrm.d ]; then
-        run-parts --verbose \
-            --arg=%{kvname} \
-            --arg=/boot/%{kernel_install_file}-%{kvname} \
-            /etc/kernel/postrm.d || true
+        for script in /etc/kernel/postrm.d/*; do
+            [ -x "$script" ] && "$script" %{kvname} /boot/%{kernel_install_file}-%{kvname} || true
+        done
     fi
     rm -f /boot/initrd.img-%{kvname}
     rm -f /boot/initrd.img-%{kvname}.bak
+    rm -f /boot/initramfs-%{kvname}.img
     rm -f /var/lib/initramfs-tools/%{kvname}
+    # Clean up modules directory if empty
+    rmdir /lib/modules/%{kvname} 2>/dev/null || true
 fi
 
 %files
@@ -356,7 +382,7 @@ fi
 %exclude /lib/modules/%{kvname}/build
 /lib/modprobe.d/blacklist_pve-kernel-%{kvname}.conf
 
-%files -n pve-kernel-%{kernel_major}.%{kernel_minor}
+%files -n pve-kernel-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
 # meta package, no files
 
 %files -n pve-headers-%{kvname}
@@ -364,7 +390,7 @@ fi
 /usr/src/linux-headers-%{kvname}/
 /lib/modules/%{kvname}/build
 
-%files -n pve-headers-%{kernel_major}.%{kernel_minor}
+%files -n pve-headers-%{kernel_major}.%{kernel_minor}-%{pkg_distro}
 # meta package, no files
 
 %files -n pve-kernel-libc-dev
