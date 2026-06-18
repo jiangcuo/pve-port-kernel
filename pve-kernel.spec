@@ -172,9 +172,6 @@ for p in $(cat debian/patches/series.zfs); do
 done
 
 %build
-NPROC=%{?_smp_mflags}
-NPROC=${NPROC:-"-j$(nproc)"}
-
 make -C linux CC=%{kernel_cc} ARCH=%{ker_arch} %{defconfig}
 cd linux
 scripts/kconfig/merge_config.sh -m .config ../debian/config/common.kconfig
@@ -217,7 +214,7 @@ for moddir in modules/*/; do
         exit 1
     fi
     echo "=== BUILD MODULE: $modname from $modsrc ==="
-    make -C $(realpath linux) \
+    make -C $(realpath linux) %{?_smp_mflags} \
         CC=%{kernel_cc} \
         ARCH=%{ker_arch} \
         M=$(realpath "$modsrc") \
