@@ -1,20 +1,5 @@
 # pve-kernel: PVE Port Kernel based on openEuler 6.6 + ZFS
 #
-# 产出 4 个 RPM：
-#   pve-kernel-<KVNAME>          内核 + 模块 + ZFS 模块 + 额外模块
-#   pve-headers-<KVNAME>         内核头文件（编译外部模块用）
-#   pve-kernel-libc-dev          用户态头文件（libc 开发用）
-#   linux-tools-<MAJMIN>         perf 工具
-#
-# 构建方式：
-#   1. git submodule update --init --depth=1 拉取 linux + zfs 源码
-#   2. 应用 debian/patches/series.linux + series.zfs 补丁
-#   3. 合并 kconfig（openeuler_defconfig + common + arch）
-#   4. make bzImage/Image + modules
-#   5. 编译 ZFS 内核模块
-#   6. 编译 modules/ 下的额外模块
-#   7. 打包
-
 %global kernel_major    6
 %global kernel_minor    6
 %global kernel_patch    0
@@ -122,11 +107,21 @@ BuildRequires:  libtraceevent-devel
 Provides:       kernel = %{version}-%{release}
 Provides:       kernel-core = %{version}-%{release}
 Provides:       kernel-modules = %{version}-%{release}
+Provides:       linux-image = %{version}-%{release}
 
 %description
 PVE Port Kernel %{kvname} based on openEuler %{kernel_major}.%{kernel_minor}.
 Includes ZFS kernel modules and PVE-specific patches.
 Supports x86_64, aarch64, loongarch64, and riscv64.
+
+%package -n     pve-kernel-%{kernel_major}.%{kernel_minor}
+Summary:        Latest PVE Port Kernel Image for the %{kernel_major}.%{kernel_minor} series
+Requires:       pve-kernel = %{version}-%{release}
+AutoReqProv:    no
+
+%description -n pve-kernel-%{kernel_major}.%{kernel_minor}
+This is a metapackage which will install the latest available
+PVE Port kernel image from the %{kernel_major}.%{kernel_minor} series.
 
 %package -n     pve-headers-%{kvname}
 Summary:        Kernel headers for pve-kernel %{kvname}
@@ -136,6 +131,15 @@ AutoReqProv:    no
 %description -n pve-headers-%{kvname}
 Linux kernel headers for building external modules against
 pve-kernel %{kvname}.
+
+%package -n     pve-headers-%{kernel_major}.%{kernel_minor}
+Summary:        Latest PVE Port Kernel Headers for the %{kernel_major}.%{kernel_minor} series
+Requires:       pve-headers-%{kvname} = %{version}-%{release}
+AutoReqProv:    no
+
+%description -n pve-headers-%{kernel_major}.%{kernel_minor}
+This is a metapackage which will install the kernel headers for the
+latest available PVE Port kernel from the %{kernel_major}.%{kernel_minor} series.
 
 %package -n     pve-kernel-libc-dev
 Summary:        Linux kernel headers for userspace development
@@ -355,10 +359,16 @@ fi
 %exclude /lib/modules/%{kvname}/build
 /lib/modprobe.d/blacklist_pve-kernel-%{kvname}.conf
 
+%files -n pve-kernel-%{kernel_major}.%{kernel_minor}
+# meta package, no files
+
 %files -n pve-headers-%{kvname}
 %defattr(-,root,root,-)
 /usr/src/linux-headers-%{kvname}/
 /lib/modules/%{kvname}/build
+
+%files -n pve-headers-%{kernel_major}.%{kernel_minor}
+# meta package, no files
 
 %files -n pve-kernel-libc-dev
 %defattr(-,root,root,-)
@@ -369,17 +379,17 @@ fi
 %{_bindir}/perf_%{kernel_major}.%{kernel_minor}
 
 %changelog
-* Wed May 27 2026 PxVirt Team <pxvirt@openeuler.org> - 6.6.0-17
+* Wed May 27 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-17
 - Update Linux to openeuler 6.6.0-152.0.0
 - Disable CGROUP_XCU and CGROUP_DMEM
 
-* Sat May 02 2026 PxVirt Team <pxvirt@openeuler.org> - 6.6.0-16
+* Sat May 02 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-16
 - Update Linux to openeuler 6.6.0-150.0.0, Fix CVE-2026-31431
 
-* Sat Apr 11 2026 PxVirt Team <pxvirt@openeuler.org> - 6.6.0-15
+* Sat Apr 11 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-15
 - Add extra modules support
 - Update Linux to openeuler 6.6.0-145.0.2
 
-* Fri Mar 27 2026 PxVirt Team <pxvirt@openeuler.org> - 6.6.0-14
+* Fri Mar 27 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-14
 - Update Linux to openeuler 20260327
 - Update ZFS to 2.3.6
