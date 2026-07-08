@@ -4,3 +4,6 @@
 [submodule "linux"]
 	path = linux
 	url = https://atomgit.com/openeuler/kernel
+[submodule "modules/r8125/r8125"]
+	path = modules/r8125/r8125
+	url = https://github.com/awesometic/realtek-r8125-dkms.git

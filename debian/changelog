@@ -1,3 +1,11 @@
+pve-kernel (6.6.0-18) openeuler; urgency=medium
+
+  * Update Linux to openeuler 7fb88605a2ec81f7d343ff776cb84740c9d55900
+  * Update ZFS to 2.3.8 
+  * Add r8125 driver support
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Wed, 08 Jul 2026 13:48:59 +0000
+
 pve-kernel (6.6.0-17) openeuler; urgency=medium
 
   * Updae Linux to openeuler 6.6.0-152.0.0

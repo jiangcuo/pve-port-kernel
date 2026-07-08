@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: root <root@localhost>
+Date: Wed, 8 Jul 2026 11:32:00 +0000
+Subject: [PATCH] tools perf: drop duplicate AMD64_RMP_CFG MSR definition
+
+The perf x86 MSR beauty table is generated from
+tools/arch/x86/include/asm/msr-index.h. MSR_AMD64_RMP_CFG is listed
+twice there with the same value, which makes the generated
+x86_arch_MSRs_array.c contain two initializers for the same array slot.
+
+With -Werror=override-init this breaks the perf build:
+
+  error: initialized field overwritten [-Werror=override-init]
+
+Keep the later RMP block, matching the non-tools arch/x86 header layout,
+and remove the earlier duplicate definitions.
+
+Signed-off-by: root <root@localhost>
+---
+ tools/arch/x86/include/asm/msr-index.h | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/tools/arch/x86/include/asm/msr-index.h b/tools/arch/x86/include/asm/msr-index.h
+index 47db90e8e..3b0aa47c3 100644
+--- a/tools/arch/x86/include/asm/msr-index.h
++++ b/tools/arch/x86/include/asm/msr-index.h
+@@ -642,10 +642,6 @@
+ #define MSR_AMD64_SEV_ES_ENABLED	BIT_ULL(MSR_AMD64_SEV_ES_ENABLED_BIT)
+ #define MSR_AMD64_SEV_SNP_ENABLED_BIT	2
+ #define MSR_AMD64_SEV_SNP_ENABLED	BIT_ULL(MSR_AMD64_SEV_SNP_ENABLED_BIT)
+-#define MSR_AMD64_RMP_CFG		0xc0010136
+-#define MSR_AMD64_SEG_RMP_ENABLED_BIT	0
+-#define MSR_AMD64_SEG_RMP_ENABLED	BIT_ULL(MSR_AMD64_SEG_RMP_ENABLED_BIT)
+-#define MSR_AMD64_RMP_SEGMENT_SHIFT(x)	(((x) & GENMASK_ULL(13, 8)) >> 8)
+ #define MSR_AMD64_SNP_VTOM_BIT		3
+ #define MSR_AMD64_SNP_VTOM		BIT_ULL(MSR_AMD64_SNP_VTOM_BIT)
+ #define MSR_AMD64_SNP_REFLECT_VC_BIT	4
+-- 
+2.39.5
+

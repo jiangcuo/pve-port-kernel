@@ -4,7 +4,7 @@
 %global kernel_minor    6
 %global kernel_patch    0
 %global kernel_version  %{kernel_major}.%{kernel_minor}.%{kernel_patch}
-%global pkg_release     17
+%global pkg_release     18
 %global pkg_distro      openeuler
 
 # 架构相关变量
