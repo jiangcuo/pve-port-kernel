@@ -252,10 +252,6 @@ make ARCH=%{ker_arch} -C linux \
     INSTALL_MOD_PATH=%{buildroot} \
     modules_install
 
-make ARCH=%{ker_arch} -C linux \
-    INSTALL_PATH=%{buildroot}/boot \
-    dtbs_install 2>/dev/null || true
-
 install -d -m 755 %{buildroot}/lib/modules/${KVNAME}/zfs
 install -m 644 zfs/module/zfs.ko %{buildroot}/lib/modules/${KVNAME}/zfs/
 install -m 644 zfs/module/spl.ko %{buildroot}/lib/modules/${KVNAME}/zfs/
