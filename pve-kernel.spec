@@ -78,7 +78,6 @@ BuildRequires:  openssl-devel
 BuildRequires:  elfutils-libelf-devel
 BuildRequires:  dwarves
 BuildRequires:  perl-interpreter
-BuildRequires:  python3
 BuildRequires:  python3-devel
 BuildRequires:  rsync
 BuildRequires:  kmod
