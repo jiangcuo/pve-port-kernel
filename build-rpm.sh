@@ -1,74 +1,109 @@
 #!/bin/bash
-# build-rpm.sh - Build pve-port-kernel as RPM packages.
+# build-rpm.sh - Build Pxvirt Kernel RPMs with an optional page-size variant.
 #
 # Usage:
-#   ./build-rpm.sh [OPTIONS]
+#   ./build-rpm.sh --variant <4k|16k|64k> [OPTIONS]
 #
 # Options:
-#   --no-deps       Skip installing build dependencies
-#   --prep-only     Prepare source tarball only, skip rpmbuild
-#   --srpm-only     Build source RPM only (no binary packages)
-#   --clean         Remove build directory and exit
-#   -h, --help      Show this help
+#   --variant NAME   Select exactly one page-size variant
+#   --no-deps        Skip installing build dependencies
+#   --prep-only      Prepare source tarball only, skip rpmbuild
+#   --srpm-only      Build the canonical source RPM only
+#   --clean          Remove all RPM build directories and exit
+#   -h, --help       Show this help
 #
 # Environment:
-#   JOBS    Number of parallel compile jobs (default: nproc)
+#   BUILD_ARCH   RPM target architecture (default: uname -m)
+#   JOBS         Number of parallel compile jobs (default: nproc)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ----------------------------------------------------------------------
-# Defaults
-# ----------------------------------------------------------------------
-BUILD_ARCH="$(uname -m)"
+BUILD_ARCH="${BUILD_ARCH:-$(uname -m)}"
 DO_DEPS=1
 PREP_ONLY=0
 SRPM_ONLY=0
+VARIANT=""
+VARIANT_SET=0
 JOBS="${JOBS:-$(nproc)}"
 
-# ----------------------------------------------------------------------
-# Parse arguments
-# ----------------------------------------------------------------------
-for arg in "$@"; do
-    case "$arg" in
-        --no-deps)    DO_DEPS=0 ;;
-        --prep-only)  PREP_ONLY=1 ;;
-        --srpm-only)  SRPM_ONLY=1 ;;
+usage() {
+    sed -n '2,/^[^#]/{ /^#/s/^# \?//p }' "$0"
+}
+
+set_variant() {
+    local value="$1"
+
+    case "$value" in
+        4k|16k|64k) ;;
+        *)
+            echo "error: invalid variant '$value' (expected 4k, 16k, or 64k)" >&2
+            exit 1
+            ;;
+    esac
+    if [[ "$VARIANT_SET" == "1" ]]; then
+        echo "error: kernel variant was specified more than once" >&2
+        exit 1
+    fi
+    VARIANT="$value"
+    VARIANT_SET=1
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --variant)
+            [[ $# -ge 2 ]] || { echo "error: --variant requires a value" >&2; exit 1; }
+            set_variant "$2"
+            shift 2
+            ;;
+        --no-deps)
+            DO_DEPS=0
+            shift
+            ;;
+        --prep-only)
+            PREP_ONLY=1
+            shift
+            ;;
+        --srpm-only)
+            SRPM_ONLY=1
+            shift
+            ;;
         --clean)
             rm -rf "$SCRIPT_DIR/_rpmbuild"
             echo "Cleaned _rpmbuild/"
             exit 0
             ;;
         -h|--help)
-            sed -n '2,/^[^#]/{ /^#/s/^# \?//p }' "$0"
+            usage
             exit 0
             ;;
         *)
-            echo "error: unknown option: $arg" >&2
+            echo "error: unknown option: $1" >&2
             exit 1
             ;;
     esac
 done
 
-# ----------------------------------------------------------------------
-# Read version from spec
-# ----------------------------------------------------------------------
-SPEC_FILE="$SCRIPT_DIR/pve-kernel.spec"
-[[ -f "$SPEC_FILE" ]] || { echo "error: pve-kernel.spec not found" >&2; exit 1; }
+if [[ "$SRPM_ONLY" == "1" && "$VARIANT_SET" == "1" ]]; then
+    echo "error: --srpm-only creates the canonical source package and cannot select a variant" >&2
+    exit 1
+fi
+
+SPEC_FILE="$SCRIPT_DIR/pxvirt-kernel.spec"
+[[ -f "$SPEC_FILE" ]] || { echo "error: pxvirt-kernel.spec not found" >&2; exit 1; }
 
 KERNEL_VERSION=$(awk '/%global kernel_major/{maj=$3} /%global kernel_minor/{min=$3} /%global kernel_patch/{pat=$3} END{print maj"."min"."pat}' "$SPEC_FILE")
-PKG_RELEASE=$(awk '/%global pkg_release/{print $3}' "$SPEC_FILE")
-PKG_DISTRO=$(awk '/%global pkg_distro/{print $3}' "$SPEC_FILE")
-KVNAME="${KERNEL_VERSION}-${PKG_RELEASE}-${PKG_DISTRO}"
+PKG_RELEASE=$(awk '/%global pkg_release/{print $3; exit}' "$SPEC_FILE")
 
-echo "arch=$BUILD_ARCH  version=$KERNEL_VERSION  release=$PKG_RELEASE  jobs=$JOBS"
-
-# ----------------------------------------------------------------------
-# Build directory layout
-# ----------------------------------------------------------------------
-TOPDIR="$SCRIPT_DIR/_rpmbuild"
+if [[ "$SRPM_ONLY" == "1" ]]; then
+    TOPDIR="$SCRIPT_DIR/_rpmbuild/source"
+elif [[ -n "$VARIANT" ]]; then
+    TOPDIR="$SCRIPT_DIR/_rpmbuild/$VARIANT"
+else
+    TOPDIR="$SCRIPT_DIR/_rpmbuild"
+fi
 SOURCES_DIR="$TOPDIR/SOURCES"
 SPECS_DIR="$TOPDIR/SPECS"
 BUILD_DIR="$TOPDIR/BUILD"
@@ -78,28 +113,23 @@ SRPMS_DIR="$TOPDIR/SRPMS"
 
 mkdir -p "$SOURCES_DIR" "$SPECS_DIR" "$BUILD_DIR" "$BUILDROOT_DIR" "$RPMS_DIR" "$SRPMS_DIR"
 
-# ----------------------------------------------------------------------
-# Step 1: Ensure submodules are available
-# ----------------------------------------------------------------------
+echo "arch=$BUILD_ARCH  version=$KERNEL_VERSION  release=$PKG_RELEASE  jobs=$JOBS"
+if [[ -n "$VARIANT" ]]; then
+    echo "variant=$VARIANT"
+fi
+
 echo "==> [1/5] Checking submodules"
+[[ -f linux/Makefile ]] || git submodule update --init --depth=1
+[[ -f linux/Makefile ]] || { echo "error: linux/Makefile not found" >&2; exit 1; }
+[[ -f zfs/META ]] || git submodule update --init --depth=1
+[[ -f zfs/META ]] || { echo "error: zfs/META not found" >&2; exit 1; }
 
-[[ -f "linux/Makefile" ]] || git submodule update --init --depth=1
-[[ -f "linux/Makefile" ]] || { echo "error: linux/Makefile not found" >&2; exit 1; }
-
-[[ -f "zfs/META" ]] || git submodule update --init --depth=1
-[[ -f "zfs/META" ]] || { echo "error: zfs/META not found" >&2; exit 1; }
-
-# ----------------------------------------------------------------------
-# Step 2: Create source tarball
-# ----------------------------------------------------------------------
 echo "==> [2/5] Creating source tarball"
-
-TARBALL_NAME="pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}.tar.gz"
+TARBALL_NAME="pxvirt-kernel-${KERNEL_VERSION}-${PKG_RELEASE}.tar.gz"
 TARBALL_PATH="$SOURCES_DIR/$TARBALL_NAME"
-PREFIX="pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}"
+PREFIX="pxvirt-kernel-${KERNEL_VERSION}-${PKG_RELEASE}"
 
 rm -f "$TARBALL_PATH"
-
 tar -czf "$TARBALL_PATH" \
     --transform="s|^linux/|${PREFIX}/linux/|" \
     --transform="s|^zfs/|${PREFIX}/zfs/|" \
@@ -112,7 +142,6 @@ tar -czf "$TARBALL_PATH" \
     linux/ zfs/ debian/ scripts/ modules/
 
 echo "    $(du -h "$TARBALL_PATH" | cut -f1)  $TARBALL_NAME"
-
 cp "$SPEC_FILE" "$SPECS_DIR/"
 
 if [[ "$PREP_ONLY" == "1" ]]; then
@@ -120,14 +149,10 @@ if [[ "$PREP_ONLY" == "1" ]]; then
     exit 0
 fi
 
-# ----------------------------------------------------------------------
-# Step 3: Install build dependencies
-# ----------------------------------------------------------------------
 if [[ "$DO_DEPS" == "1" && "$SRPM_ONLY" == "0" ]]; then
     echo "==> [3/5] Installing build dependencies"
     SUDO=""
     [[ $EUID -ne 0 ]] && SUDO="sudo"
-
     if command -v dnf >/dev/null 2>&1; then
         $SUDO dnf builddep -y --spec "$SPEC_FILE"
     else
@@ -138,9 +163,6 @@ else
     echo "==> [3/5] Skipping dependency install"
 fi
 
-# ----------------------------------------------------------------------
-# Step 4: rpmbuild
-# ----------------------------------------------------------------------
 RPMBUILD_ARGS=(
     --define "_topdir $TOPDIR"
     --define "_sourcedir $SOURCES_DIR"
@@ -153,22 +175,30 @@ RPMBUILD_ARGS=(
     --target "$BUILD_ARCH"
 )
 
+case "$VARIANT" in
+    "") VARIANT_ARGS=() ;;
+    4k) VARIANT_ARGS=(--with pagesize_4k) ;;
+    16k) VARIANT_ARGS=(--with pagesize_16k) ;;
+    64k) VARIANT_ARGS=(--with pagesize_64k) ;;
+esac
+
 if [[ "$SRPM_ONLY" == "1" ]]; then
-    echo "==> [4/5] Building SRPM"
-    rpmbuild "${RPMBUILD_ARGS[@]}" -bs "$SPECS_DIR/pve-kernel.spec"
+    echo "==> [4/5] Building canonical SRPM"
+    rpmbuild "${RPMBUILD_ARGS[@]}" -bs "$SPECS_DIR/pxvirt-kernel.spec"
+elif [[ -z "$VARIANT" ]]; then
+    echo "==> [4/5] Building RPMs and canonical SRPM"
+    rpmbuild "${RPMBUILD_ARGS[@]}" -ba "$SPECS_DIR/pxvirt-kernel.spec"
 else
-    echo "==> [4/5] Building RPMs"
-    rpmbuild "${RPMBUILD_ARGS[@]}" -ba "$SPECS_DIR/pve-kernel.spec"
+    echo "==> [4/5] Building ${VARIANT} binary RPMs"
+    rpmbuild "${RPMBUILD_ARGS[@]}" "${VARIANT_ARGS[@]}" -bb "$SPECS_DIR/pxvirt-kernel.spec"
 fi
 
-# ----------------------------------------------------------------------
-# Step 5: Summary
-# ----------------------------------------------------------------------
-echo ""
+echo
 echo "==> [5/5] Done"
-echo ""
+if [[ -n "$VARIANT" ]]; then
+    echo "Variant: $VARIANT"
+fi
 echo "RPMs:"
 find "$RPMS_DIR" -name '*.rpm' 2>/dev/null | sort | sed 's/^/  /'
-echo ""
 echo "SRPMs:"
 find "$SRPMS_DIR" -name '*.rpm' 2>/dev/null | sort | sed 's/^/  /'
