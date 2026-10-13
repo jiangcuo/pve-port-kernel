@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: jiangcuo <itsupport@lierfang.com>
+Date: Tue, 13 Oct 2026 00:00:00 +0000
+Subject: [PATCH] libperf cpumap: fix -Werror=alloc-size-larger-than with GCC 13
+
+GCC 13 cannot prove that the int sum/max of the two map sizes is
+non-negative, so it assumes the malloc() size may wrap to a huge
+size_t value and fails the build on loong64:
+
+  cpumap.c: In function 'perf_cpu_map__merge':
+  error: argument 1 range [18446744065119617024, 18446744073709551612]
+  exceeds maximum object size 9223372036854775807
+  [-Werror=alloc-size-larger-than=]
+
+Bail out early when the length is not positive. Both maps are non-NULL
+and non-empty at this point, so this does not change behaviour.
+
+---
+ tools/lib/perf/cpumap.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/tools/lib/perf/cpumap.c
++++ b/tools/lib/perf/cpumap.c
+@@ -419,6 +419,8 @@
+ 	}
+ 
+ 	tmp_len = __perf_cpu_map__nr(orig) + __perf_cpu_map__nr(other);
++	if (tmp_len <= 0)
++		return NULL;
+ 	tmp_cpus = malloc(tmp_len * sizeof(struct perf_cpu));
+ 	if (!tmp_cpus)
+ 		return NULL;
+@@ -461,6 +463,8 @@
+ 		return perf_cpu_map__get(other);
+ 
+ 	tmp_len = max(__perf_cpu_map__nr(orig), __perf_cpu_map__nr(other));
++	if (tmp_len <= 0)
++		return NULL;
+ 	tmp_cpus = malloc(tmp_len * sizeof(struct perf_cpu));
+ 	if (!tmp_cpus)
+ 		return NULL;
+-- 
+2.39.5
