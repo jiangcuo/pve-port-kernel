@@ -14,7 +14,7 @@
 %global kernel_minor    6
 %global kernel_patch    0
 %global kernel_version  %{kernel_major}.%{kernel_minor}.%{kernel_patch}
-%global pkg_release     18
+%global pkg_release     19
 %global pkg_distro      openeuler
 
 # 架构相关变量
@@ -499,6 +499,10 @@ fi
 %endif
 
 %changelog
+* Tue Oct 13 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-19
+- Switch Linux to openEuler-24.03-LTS-SP4 branch, tag 6.6.0-159.4.18
+- Drop tools-perf-drop-duplicate-AMD64-RMP_CFG-MSR patch, not needed on SP4
+
 * Wed May 27 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-17
 - Update Linux to openeuler 6.6.0-152.0.0
 - Disable CGROUP_XCU and CGROUP_DMEM
