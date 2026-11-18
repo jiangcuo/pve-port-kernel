@@ -1,3 +1,12 @@
+pve-kernel (6.18.62-1) generic; urgency=medium
+
+  * Switch Linux to AOSC-Tracking/linux branch aosc/v6.18.62
+    (3f4115f7c3a8e4d261d32d4e5f211f5ab65bbf84)
+  * Rename the binary package series to pve-kernel-6.18-generic
+  * Use upstream defconfig targets, openeuler_defconfig is not in this tree
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Wed, 18 Nov 2026 13:54:50 +0800
+
 pve-kernel (6.6.0-19) openeuler; urgency=medium
 
   * Switch Linux to openEuler-24.03-LTS-SP4 branch, tag 6.6.0-159.4.18

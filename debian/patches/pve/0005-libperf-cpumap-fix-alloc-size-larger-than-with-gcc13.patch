@@ -15,22 +15,28 @@ size_t value and fails the build on loong64:
 Bail out early when the length is not positive. Both maps are non-NULL
 and non-empty at this point, so this does not change behaviour.
 
+Note the two call sites use different error conventions:
+perf_cpu_map__merge() returns int (-ENOMEM), while
+perf_cpu_map__intersect() returns a pointer (NULL).
+
 ---
  tools/lib/perf/cpumap.c | 4 ++++
  1 file changed, 4 insertions(+)
 
+Index: b/tools/lib/perf/cpumap.c
+===================================================================
 --- a/tools/lib/perf/cpumap.c
 +++ b/tools/lib/perf/cpumap.c
-@@ -419,6 +419,8 @@
+@@ -423,6 +423,8 @@
  	}
  
- 	tmp_len = __perf_cpu_map__nr(orig) + __perf_cpu_map__nr(other);
+ 	tmp_len = __perf_cpu_map__nr(*orig) + __perf_cpu_map__nr(other);
 +	if (tmp_len <= 0)
-+		return NULL;
++		return -ENOMEM;
  	tmp_cpus = malloc(tmp_len * sizeof(struct perf_cpu));
  	if (!tmp_cpus)
- 		return NULL;
-@@ -461,6 +463,8 @@
+ 		return -ENOMEM;
+@@ -466,6 +468,8 @@
  		return perf_cpu_map__get(other);
  
  	tmp_len = max(__perf_cpu_map__nr(orig), __perf_cpu_map__nr(other));
@@ -39,5 +45,3 @@ and non-empty at this point, so this does not change behaviour.
  	tmp_cpus = malloc(tmp_len * sizeof(struct perf_cpu));
  	if (!tmp_cpus)
  		return NULL;
--- 
-2.39.5

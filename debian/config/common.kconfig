@@ -1,3 +1,30 @@
+# Version string
+# The package name and the module directory come from debian/changelog via
+# KVNAME, so the kernel must not append anything of its own. The base configs
+# in debian/config/*-base.config come from another distribution and carry its
+# own LOCALVERSION, and LOCALVERSION_AUTO defaults to y in Kconfig, which
+# together would make the release string 6.x.y-N-generic-aosc-main-g<hash>-dirty
+# (the tree is always dirty while the quilt patches are applied) and install
+# the modules into a directory KVNAME does not match.
+CONFIG_LOCALVERSION=""
+CONFIG_LOCALVERSION_AUTO=n
+
+# Module compression
+# The packaging globs for uncompressed *.ko throughout: debian/rules strips
+# them in place, derives the watchdog blacklist by cutting the .ko suffix, and
+# installs the ZFS modules uncompressed next to them; the spec builds its
+# debuginfo file list the same way. Base configs ship ZSTD compression, which
+# would silently break all of that. Disable the feature itself: 6.18 no longer
+# has a MODULE_COMPRESS_NONE symbol, so merely turning ZSTD off falls through
+# to the first entry of the algorithm choice (GZIP).
+CONFIG_MODULE_COMPRESS=n
+
+# Certificates
+# Base configs may point these at the vendor's own certificate files, which do
+# not exist here and would fail the build.
+CONFIG_SYSTEM_TRUSTED_KEYS=""
+CONFIG_SYSTEM_REVOCATION_KEYS=""
+
 # Other
 CONFIG_UNICODE=m
 CONFIG_KVM=y

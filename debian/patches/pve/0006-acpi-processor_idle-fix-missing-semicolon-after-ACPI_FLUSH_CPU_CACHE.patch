@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lierfang Support Team <itsupport@lierfang.com>
+Date: Wed, 18 Nov 2026 00:00:00 +0000
+Subject: [PATCH] ACPI: processor_idle: fix missing semicolon after
+ ACPI_FLUSH_CPU_CACHE()
+
+The aosc/v6.18.62 tree rewrote the ACPI_FLUSH_CPU_CACHE() call in
+acpi_idle_enter() to use braces but dropped the trailing semicolon:
+
+	if (cx->type == ACPI_STATE_C3) {
+		ACPI_FLUSH_CPU_CACHE()
+	}
+
+On x86 the macro expands to a do { ... } while (0) block
+(arch/x86/include/asm/acenv.h), so the statement needs the semicolon and
+the build fails:
+
+  drivers/acpi/processor_idle.c: In function 'acpi_idle_enter':
+  drivers/acpi/processor_idle.c:700:9: error: expected ';' before '}' token
+  drivers/acpi/processor_idle.c:707:22: error: invalid storage class for
+  function 'acpi_idle_enter_s2idle'
+  [... every following function in the file ...]
+  drivers/acpi/processor_idle.c:1472:1: error: expected declaration or
+  statement at end of input
+
+Only the first error is real; acpi_idle_enter() never closes, so the
+compiler treats the rest of the file as nested inside it.
+
+The two other call sites in the same file (lines 585 and 728) already
+have the semicolon. The generic ACPI_FLUSH_CPU_CACHE() in
+include/acpi/platform/aclinux.h expands to nothing, which is why this
+only breaks on x86.
+
+Upstream v6.18 has no braces here:
+
+	if (cx->type == ACPI_STATE_C3)
+		ACPI_FLUSH_CPU_CACHE();
+
+Keep the braces and just add the semicolon, so the fix stays a one
+character diff against the tree we build.
+
+Signed-off-by: Lierfang Support Team <itsupport@lierfang.com>
+---
+ drivers/acpi/processor_idle.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: b/drivers/acpi/processor_idle.c
+===================================================================
+--- a/drivers/acpi/processor_idle.c
++++ b/drivers/acpi/processor_idle.c
+@@ -696,7 +696,7 @@
+ 	}
+ 
+ 	if (cx->type == ACPI_STATE_C3) {
+-		ACPI_FLUSH_CPU_CACHE()
++		ACPI_FLUSH_CPU_CACHE();
+ 	}
+ 
+ 	acpi_idle_do_entry(cx);

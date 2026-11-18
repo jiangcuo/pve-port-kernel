@@ -1,4 +1,4 @@
-# pxvirt-kernel: Pxvirt Kernel based on openEuler 6.6 + ZFS
+# pve-kernel: PVE Kernel based on Linux 6.18 + ZFS
 #
 
 %bcond_with pagesize_4k
@@ -11,11 +11,11 @@
 %endif
 
 %global kernel_major    6
-%global kernel_minor    6
-%global kernel_patch    0
+%global kernel_minor    18
+%global kernel_patch    62
 %global kernel_version  %{kernel_major}.%{kernel_minor}.%{kernel_patch}
-%global pkg_release     19
-%global pkg_distro      openeuler
+%global pkg_release     1
+%global pkg_distro      generic
 
 # 架构相关变量
 %ifarch x86_64
@@ -24,7 +24,7 @@
 %global kernel_image    bzImage
 %global kernel_image_path arch/x86/boot/bzImage
 %global kernel_install_file vmlinuz
-%global defconfig       openeuler_defconfig
+%global defconfig       x86_64_defconfig
 %global config_arch     amd64
 %global cross_compile   %{nil}
 %global kernel_cc       gcc
@@ -36,7 +36,7 @@
 %global kernel_image    Image
 %global kernel_image_path arch/arm64/boot/Image
 %global kernel_install_file vmlinuz
-%global defconfig       openeuler_defconfig
+%global defconfig       defconfig
 %global config_arch     arm64
 %global cross_compile   %{nil}
 %global kernel_cc       gcc
@@ -48,7 +48,7 @@
 %global kernel_image    Image
 %global kernel_image_path arch/riscv/boot/Image
 %global kernel_install_file vmlinuz
-%global defconfig       openeuler_defconfig
+%global defconfig       defconfig
 %global config_arch     riscv64
 %global cross_compile   %{nil}
 %global kernel_cc       gcc
@@ -81,20 +81,20 @@
 %global series_name             %{kernel_major}.%{kernel_minor}-%{pkg_distro}
 %global extraversion            -%{pkg_release}.%{pkg_distro}.%{_target_cpu}%{?variant_suffix}
 %global kvname                  %{kernel_version}%{extraversion}
-%global runtime_pkg_name        pxvirt-kernel-%{abi_name}%{?variant_suffix}
-%global runtime_meta_pkg_name   pxvirt-kernel-%{series_name}%{?variant_suffix}
-%global headers_pkg_name        pxvirt-headers-%{abi_name}%{?variant_suffix}
-%global headers_meta_pkg_name   pxvirt-headers-%{series_name}%{?variant_suffix}
+%global runtime_pkg_name        pve-kernel-%{abi_name}%{?variant_suffix}
+%global runtime_meta_pkg_name   pve-kernel-%{series_name}%{?variant_suffix}
+%global headers_pkg_name        pve-headers-%{abi_name}%{?variant_suffix}
+%global headers_meta_pkg_name   pve-headers-%{series_name}%{?variant_suffix}
 %global debuginfo_pkg_name      %{runtime_pkg_name}-debuginfo
 
-Name:           pxvirt-kernel
+Name:           pve-kernel
 Version:        %{kernel_version}
 Release:        %{pkg_release}%{?dist}
-Summary:        Pxvirt Kernel source
+Summary:        PVE Kernel source
 
 License:        GPL-2.0-only
 URL:            https://github.com/jiangcuo/pve-port-kernel
-Source0:        pxvirt-kernel-%{version}-%{pkg_release}.tar.gz
+Source0:        pve-kernel-%{version}-%{pkg_release}.tar.gz
 
 BuildRequires:  gcc
 BuildRequires:  gcc-c++
@@ -143,12 +143,12 @@ BuildRequires:  libtraceevent-devel
 %{expand:%%global _find_debuginfo_opts %{?_find_debuginfo_opts} --keep-section '.BTF' -p '.*/%{kvname}/.*|.*/vmlinux|XXX' -o kernel-debugfiles.list}
 
 %description
-Source package for Pxvirt Kernel based on openEuler
-%{kernel_major}.%{kernel_minor}. Binary kernel packages use the Pxvirt naming
+Source package for PVE Kernel based on upstream Linux
+%{kernel_major}.%{kernel_minor}. Binary kernel packages use the PVE naming
 scheme and are selected one variant at a time.
 
 %package -n     %{runtime_pkg_name}
-Summary:        Pxvirt Kernel %{abi_name}%{?variant_suffix}
+Summary:        PVE Kernel %{abi_name}%{?variant_suffix}
 AutoReqProv:    no
 Provides:       kernel-uname-r(%{kvname})
 %if %{selected_page_variants} == 0
@@ -162,21 +162,21 @@ Provides:       installonlypkg(kernel)
 Provides:       linux-image = %{version}-%{release}
 
 %description -n %{runtime_pkg_name}
-Pxvirt Kernel %{kvname} based on openEuler. Includes ZFS kernel modules
-and Pxvirt-specific patches.
+PVE Kernel %{kvname} based on upstream Linux. Includes ZFS kernel modules
+and PVE-specific patches.
 
 %package -n     %{runtime_meta_pkg_name}
-Summary:        Latest Pxvirt Kernel for the %{series_name}%{?variant_suffix} series
+Summary:        Latest PVE Kernel for the %{series_name}%{?variant_suffix} series
 BuildArch:      noarch
 Requires:       %{runtime_pkg_name} = %{version}-%{release}
 AutoReqProv:    no
 
 %description -n %{runtime_meta_pkg_name}
-Metapackage for the latest Pxvirt Kernel in the
+Metapackage for the latest PVE Kernel in the
 %{series_name}%{?variant_suffix} series.
 
 %package -n     %{headers_pkg_name}
-Summary:        Development files for Pxvirt Kernel %{kvname}
+Summary:        Development files for PVE Kernel %{kvname}
 AutoReqProv:    no
 Provides:       kernel-devel-uname-r(%{kvname})
 %if %{selected_page_variants} == 0
@@ -186,16 +186,16 @@ Provides:       kernel-devel-%{_target_cpu} = %{version}-%{release}
 
 %description -n %{headers_pkg_name}
 Kernel headers and makefiles for building external modules against
-Pxvirt Kernel %{kvname}.
+PVE Kernel %{kvname}.
 
 %package -n     %{headers_meta_pkg_name}
-Summary:        Latest Pxvirt Kernel headers for the %{series_name}%{?variant_suffix} series
+Summary:        Latest PVE Kernel headers for the %{series_name}%{?variant_suffix} series
 BuildArch:      noarch
 Requires:       %{headers_pkg_name} = %{version}-%{release}
 AutoReqProv:    no
 
 %description -n %{headers_meta_pkg_name}
-Metapackage for the latest Pxvirt Kernel development files in the
+Metapackage for the latest PVE Kernel development files in the
 %{series_name}%{?variant_suffix} series.
 
 %package -n     %{debuginfo_pkg_name}
@@ -204,16 +204,16 @@ AutoReq:        no
 AutoProv:       yes
 
 %description -n %{debuginfo_pkg_name}
-Unstripped vmlinux and module debug information for Pxvirt Kernel %{kvname}.
+Unstripped vmlinux and module debug information for PVE Kernel %{kvname}.
 
 %if %{selected_page_variants} == 0
-%package -n     pxvirt-kernel-libc-dev
+%package -n     pve-kernel-libc-dev
 Summary:        Linux kernel headers for userspace development
 Provides:       kernel-headers-userspace = %{version}-%{release}
 Conflicts:      kernel-headers
 AutoReqProv:    no
 
-%description -n pxvirt-kernel-libc-dev
+%description -n pve-kernel-libc-dev
 Linux support headers for userspace development (libc headers).
 
 %package -n     linux-tools-%{kernel_major}.%{kernel_minor}
@@ -226,7 +226,7 @@ Performance analysis tools (perf) for Linux kernel %{kernel_major}.%{kernel_mino
 %endif
 
 %prep
-%setup -q -n pxvirt-kernel-%{version}-%{pkg_release}
+%setup -q -n pve-kernel-%{version}-%{pkg_release}
 
 for p in $(cat debian/patches/series.linux); do
     echo "Applying linux patch: $p"
@@ -239,28 +239,43 @@ for p in $(cat debian/patches/series.zfs); do
 done
 
 %build
-%if %{selected_page_variants} > 0
-%ifarch aarch64
-sed -i -E \
-    's/^CONFIG_ARM64_(4K|16K|64K)_PAGES=y$/CONFIG_ARM64_%{variant_page_size}K_PAGES=y/' \
-    linux/arch/arm64/configs/%{defconfig}
-%endif
-%ifarch loongarch64
-echo 'CONFIG_%{variant_page_size}KB_3LEVEL=y' >> \
-    linux/arch/loongarch/configs/%{defconfig}
-%endif
-%endif
-
-make -C linux \
-    CC=%{kernel_cc} \
-    ARCH=%{ker_arch} \
-    EXTRAVERSION=%{extraversion} \
-    LOCALVERSION= \
-    %{defconfig}
+# Prefer a full distribution config over the in-tree defconfig: the upstream
+# defconfigs are minimal (x86_64_defconfig builds ~200 modules and no amdgpu),
+# while debian/config/*.kconfig are override fragments meant to sit on top of a
+# distribution config, not to replace one. Architectures without a base config
+# fall back to %{defconfig}.
+if [ -f debian/config/%{config_arch}-base.config ]; then
+    cp debian/config/%{config_arch}-base.config linux/.config
+else
+    make -C linux \
+        CC=%{kernel_cc} \
+        ARCH=%{ker_arch} \
+        EXTRAVERSION=%{extraversion} \
+        LOCALVERSION= \
+        %{defconfig}
+fi
 
 cd linux
 scripts/kconfig/merge_config.sh -m .config ../debian/config/common.kconfig
-scripts/kconfig/merge_config.sh -m .config ../debian/config/%{config_arch}.kconfig
+if [ -f ../debian/config/%{config_arch}.kconfig ]; then
+    scripts/kconfig/merge_config.sh -m .config ../debian/config/%{config_arch}.kconfig
+fi
+%if %{selected_page_variants} > 0
+if [ -f ../debian/config/%{config_arch}-%{variant_page_size}k.kconfig ]; then
+    scripts/kconfig/merge_config.sh -m .config \
+        ../debian/config/%{config_arch}-%{variant_page_size}k.kconfig
+fi
+# The page size lives in .config now, not in an arch defconfig file.
+%ifarch aarch64
+scripts/config --disable ARM64_4K_PAGES \
+               --disable ARM64_16K_PAGES \
+               --disable ARM64_64K_PAGES
+scripts/config --enable ARM64_%{variant_page_size}K_PAGES
+%endif
+%ifarch loongarch64
+scripts/config --enable %{variant_page_size}KB_3LEVEL
+%endif
+%endif
 scripts/config --set-str LOCALVERSION ""
 scripts/config --disable LOCALVERSION_AUTO
 make CC=%{kernel_cc} ARCH=%{ker_arch} \
@@ -369,7 +384,7 @@ install -d -m 755 %{buildroot}/lib/modprobe.d
 (ls %{buildroot}/lib/modules/${KVNAME}/kernel/drivers/watchdog/ 2>/dev/null || true; \
  echo ipmi_watchdog.ko) | \
     sed -e 's/^/blacklist /' -e 's/\.ko$//' | sort -u \
-    > %{buildroot}/lib/modprobe.d/blacklist_pxvirt-kernel-${KVNAME}.conf
+    > %{buildroot}/lib/modprobe.d/blacklist_pve-kernel-${KVNAME}.conf
 
 rm -f %{buildroot}/lib/modules/${KVNAME}/source
 rm -f %{buildroot}/lib/modules/${KVNAME}/build
@@ -473,7 +488,7 @@ fi
 /boot/%{kernel_install_file}-%{kvname}
 /lib/modules/%{kvname}/
 %exclude /lib/modules/%{kvname}/build
-/lib/modprobe.d/blacklist_pxvirt-kernel-%{kvname}.conf
+/lib/modprobe.d/blacklist_pve-kernel-%{kvname}.conf
 
 %files -n %{runtime_meta_pkg_name}
 # meta package, no files
@@ -489,7 +504,7 @@ fi
 %files -n %{debuginfo_pkg_name} -f kernel-debugfiles.list -f debugfiles.list
 
 %if %{selected_page_variants} == 0
-%files -n pxvirt-kernel-libc-dev
+%files -n pve-kernel-libc-dev
 %defattr(-,root,root,-)
 /usr/include/*
 
@@ -499,6 +514,12 @@ fi
 %endif
 
 %changelog
+* Wed Nov 18 2026 Lierfang Team <itsupport@lierfang.com> - 6.18.62-1
+- Switch Linux to AOSC-Tracking/linux branch aosc/v6.18.62
+- Rename binary packages from pxvirt-* to pve-kernel-*/pve-headers-*
+- Switch pkg_distro from openeuler to generic (pve-kernel-6.18-generic series)
+- Use upstream defconfig targets, openeuler_defconfig is not in this tree
+
 * Tue Oct 13 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-19
 - Switch Linux to openEuler-24.03-LTS-SP4 branch, tag 6.6.0-159.4.18
 - Drop tools-perf-drop-duplicate-AMD64-RMP_CFG-MSR patch, not needed on SP4

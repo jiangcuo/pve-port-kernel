@@ -50,35 +50,37 @@ your customers the hassle of this boot option.
 Signed-off-by: Fabian GrÃ¼nbichler <f.gruenbichler@proxmox.com>
 Signed-off-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
 ---
- .../admin-guide/kernel-parameters.txt         |   9 ++
+ .../admin-guide/kernel-parameters.txt         |  11 ++
  drivers/pci/quirks.c                          | 102 ++++++++++++++++++
- 2 files changed, 111 insertions(+)
+ 2 files changed, 113 insertions(+)
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 90ddf08e8409..eedfabda597f 100644
+Index: b/Documentation/admin-guide/kernel-parameters.txt
+===================================================================
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -4285,6 +4285,15 @@
- 				Also, it enforces the PCI Local Bus spec
- 				rule that those bits should be 0 in system reset
- 				events (useful for kexec/kdump cases).
-+		pci_acs_override =
-+				[PCIE] Override missing PCIe ACS support for:
-+				downstream
-+					All downstream ports - full ACS capabilities
-+				multifunction
-+					Add multifunction devices - multifunction ACS subset
-+				id:nnnn:nnnn
-+					Specific device - full ACS capabilities
-+					Specified as vid:did (vendor/device ID) in hex
- 		noioapicquirk	[APIC] Disable all boot interrupt quirks.
- 				Safety option to keep boot IRQs enabled. This
- 				should never be necessary.
-diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
-index c7a5718e5729..901f55b9ac64 100644
+@@ -5095,6 +5095,17 @@
+ 				to disable PCIe TLP Processing Hints support
+ 				system-wide.
+ 
++	pcie_acs_override=
++			[PCIE] Override missing PCIe ACS support for:
++		downstream
++			All downstream ports - full ACS capabilities
++		multifunction
++			Add multifunction devices - multifunction ACS subset
++		id:nnnn:nnnn
++			Specific device - full ACS capabilities
++			Specified as vid:did (vendor/device ID) in hex
++			Multiple options may be given, separated by commas.
++
+ 	pcie_aspm=	[PCIE] Forcibly enable or ignore PCIe Active State Power
+ 			Management.
+ 		off	Don't touch ASPM configuration at all.  Leave any
+Index: b/drivers/pci/quirks.c
+===================================================================
 --- a/drivers/pci/quirks.c
 +++ b/drivers/pci/quirks.c
-@@ -287,6 +287,106 @@ static int __init pci_apply_final_quirks(void)
+@@ -288,6 +288,106 @@
  }
  fs_initcall_sync(pci_apply_final_quirks);
  
@@ -185,7 +187,7 @@ index c7a5718e5729..901f55b9ac64 100644
  /*
   * Decoding should be disabled for a PCI device during BAR sizing to avoid
   * conflict. But doing so may cause problems on host bridge and perhaps other
-@@ -5091,6 +5191,8 @@ static const struct pci_dev_acs_enabled {
+@@ -5177,6 +5277,8 @@
  	{ PCI_VENDOR_ID_CAVIUM, 0xA060, pci_quirk_mf_endpoint_acs },
  	/* APM X-Gene */
  	{ PCI_VENDOR_ID_AMCC, 0xE004, pci_quirk_xgene_acs },

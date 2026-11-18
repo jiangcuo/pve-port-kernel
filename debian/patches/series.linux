@@ -1,4 +1,4 @@
 pve/0001-Make-mkcompile_h-accept-an-alternate-timestamp-strin.patch
-pve/0002-gcc14.patch
 pve/003-override_for_missing_acs_capabilities.patch
 pve/0005-libperf-cpumap-fix-alloc-size-larger-than-with-gcc13.patch
+pve/0006-acpi-processor_idle-fix-missing-semicolon-after-ACPI_FLUSH_CPU_CACHE.patch

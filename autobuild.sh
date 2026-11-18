@@ -41,12 +41,33 @@ install_deps(){
     fi
 }
 
+# A failed build never reaches override_dh_quilt_unpatch, so build/*/.pc is
+# left claiming the patches are applied. The rsync below has no --delete and
+# restores the pristine sources over the patched ones, after which quilt sees
+# .pc, decides the series is already applied and does nothing: the build then
+# compiles unpatched code with no error anywhere. Drop that state first.
+# Popping rather than just removing .pc also matters because some patches
+# rename files (zfs/0008 moves man1/arcstat.1 to man8/arcstat.8) and rsync
+# would leave the new name behind.
+unpatch_build(){
+    local d
+    for d in linux zfs; do
+        [ -d "$shell_path/build/$d/.pc" ] || continue
+        echo "build/$d: dropping stale quilt state from a previous run"
+        ( cd "$shell_path/build/$d" && \
+          QUILT_PATCHES=../debian/patches QUILT_SERIES="series.$d" \
+          quilt --quiltrc /dev/null pop -a ) || true
+        rm -rf "$shell_path/build/$d/.pc"
+    done
+}
+
 prepare(){
     cd $shell_path
     git submodule update --init --depth=1
     rm -f debian/control
     debian/rules debian/control
     install_deps
+    unpatch_build
     rsync -ra scripts linux  debian zfs modules  build
 }
 
@@ -68,7 +89,8 @@ build(){
 for arg in "$@"; do
     case $arg in
         clean)
-        rm build *.deb pve-kernel* -rf
+        # Keep the hyphen: pve-kernel* would also match pve-kernel.spec
+        rm -rf build *.deb *.ddeb *.buildinfo *.changes pve-kernel-* debian/control
         exit 0
         ;;
 

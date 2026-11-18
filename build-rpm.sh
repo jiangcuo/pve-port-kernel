@@ -91,8 +91,8 @@ if [[ "$SRPM_ONLY" == "1" && "$VARIANT_SET" == "1" ]]; then
     exit 1
 fi
 
-SPEC_FILE="$SCRIPT_DIR/pxvirt-kernel.spec"
-[[ -f "$SPEC_FILE" ]] || { echo "error: pxvirt-kernel.spec not found" >&2; exit 1; }
+SPEC_FILE="$SCRIPT_DIR/pve-kernel.spec"
+[[ -f "$SPEC_FILE" ]] || { echo "error: pve-kernel.spec not found" >&2; exit 1; }
 
 KERNEL_VERSION=$(awk '/%global kernel_major/{maj=$3} /%global kernel_minor/{min=$3} /%global kernel_patch/{pat=$3} END{print maj"."min"."pat}' "$SPEC_FILE")
 PKG_RELEASE=$(awk '/%global pkg_release/{print $3; exit}' "$SPEC_FILE")
@@ -125,9 +125,9 @@ echo "==> [1/5] Checking submodules"
 [[ -f zfs/META ]] || { echo "error: zfs/META not found" >&2; exit 1; }
 
 echo "==> [2/5] Creating source tarball"
-TARBALL_NAME="pxvirt-kernel-${KERNEL_VERSION}-${PKG_RELEASE}.tar.gz"
+TARBALL_NAME="pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}.tar.gz"
 TARBALL_PATH="$SOURCES_DIR/$TARBALL_NAME"
-PREFIX="pxvirt-kernel-${KERNEL_VERSION}-${PKG_RELEASE}"
+PREFIX="pve-kernel-${KERNEL_VERSION}-${PKG_RELEASE}"
 
 rm -f "$TARBALL_PATH"
 tar -czf "$TARBALL_PATH" \
@@ -184,13 +184,13 @@ esac
 
 if [[ "$SRPM_ONLY" == "1" ]]; then
     echo "==> [4/5] Building canonical SRPM"
-    rpmbuild "${RPMBUILD_ARGS[@]}" -bs "$SPECS_DIR/pxvirt-kernel.spec"
+    rpmbuild "${RPMBUILD_ARGS[@]}" -bs "$SPECS_DIR/pve-kernel.spec"
 elif [[ -z "$VARIANT" ]]; then
     echo "==> [4/5] Building RPMs and canonical SRPM"
-    rpmbuild "${RPMBUILD_ARGS[@]}" -ba "$SPECS_DIR/pxvirt-kernel.spec"
+    rpmbuild "${RPMBUILD_ARGS[@]}" -ba "$SPECS_DIR/pve-kernel.spec"
 else
     echo "==> [4/5] Building ${VARIANT} binary RPMs"
-    rpmbuild "${RPMBUILD_ARGS[@]}" "${VARIANT_ARGS[@]}" -bb "$SPECS_DIR/pxvirt-kernel.spec"
+    rpmbuild "${RPMBUILD_ARGS[@]}" "${VARIANT_ARGS[@]}" -bb "$SPECS_DIR/pve-kernel.spec"
 fi
 
 echo

@@ -14,8 +14,10 @@ ZFS_SRC := zfs
 
 ifeq ($(DEB_HOST_ARCH),loong64)
 DEF_CONFIG := loongson3_defconfig
+else ifeq ($(DEB_HOST_ARCH),amd64)
+DEF_CONFIG := x86_64_defconfig
 else
-DEF_CONFIG := openeuler_defconfig
+DEF_CONFIG := defconfig
 endif
 
 %:
@@ -130,14 +132,30 @@ override_dh_auto_clean: debian/control
 ## Kernel
 PVE_KERNEL_TEMPLATES := $(patsubst debian/templates/pve-kernel.%.in, debian/${PVE_KERNEL_PKG}.%, $(wildcard debian/templates/pve-kernel.*.in))
 
+## Kernel configuration
+# Prefer a full distribution config over the in-tree defconfig: the upstream
+# defconfigs are minimal (x86_64_defconfig builds ~200 modules and no amdgpu),
+# while debian/config/*.kconfig are override fragments meant to sit on top of a
+# distribution config, not to replace one. Architectures without a base config
+# fall back to ${DEF_CONFIG}.
+BASE_CONFIG := $(wildcard debian/config/${DEB_HOST_ARCH}-base.config)
+ARCH_KCONFIG := $(wildcard debian/config/${DEB_HOST_ARCH}.kconfig)
+VARIANT_KCONFIG := $(wildcard debian/config/${DEB_HOST_ARCH}-${VARIANT}.kconfig)
+
 ${KERNEL_SRC}/.config:
+ifneq ($(BASE_CONFIG),)
+	cp $(BASE_CONFIG) ${KERNEL_SRC}/.config
+else
 	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} ${DEF_CONFIG}
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
-	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_HOST_ARCH}.kconfig
-ifneq ($(VARIANT),)
-	$(if $(wildcard debian/config/${DEB_HOST_ARCH}-${VARIANT}.kconfig), \
-		cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config ../debian/config/${DEB_HOST_ARCH}-${VARIANT}.kconfig)
 endif
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
+	$(if $(ARCH_KCONFIG), \
+		cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../$(ARCH_KCONFIG))
+ifneq ($(VARIANT),)
+	$(if $(VARIANT_KCONFIG), \
+		cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config ../$(VARIANT_KCONFIG))
+endif
+	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} olddefconfig
 
 debian/${PVE_KERNEL_PKG}.%: debian/templates/pve-kernel.%.in
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/templates/pve-kernel.$*.in > debian/${PVE_KERNEL_PKG}.$*
