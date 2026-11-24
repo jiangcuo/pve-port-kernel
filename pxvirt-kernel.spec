@@ -14,7 +14,7 @@
 %global kernel_minor    6
 %global kernel_patch    0
 %global kernel_version  %{kernel_major}.%{kernel_minor}.%{kernel_patch}
-%global pkg_release     19
+%global pkg_release     20
 %global pkg_distro      openeuler
 
 # 架构相关变量
@@ -499,6 +499,20 @@ fi
 %endif
 
 %changelog
+* Tue Nov 24 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-20
+- Switch Linux back to OLK-6.6 mainline, tag 6.6.0-184.0.0
+- Align PCIe NIC/HBA/RDMA/vDPA drivers across arches in common.kconfig
+- Enable more storage and network drivers on all arches
+- Enable guest drivers for nested setups: Hyper-V/Azure, VMware, VirtualBox, Xen, gVNIC
+- Enable VFIO VGA/IGD passthrough, Intel IOMMU by default and PCI P2PDMA
+- arm64: enable HiSilicon PCIe error handling, Arm CMN/DMC-620/CoreSight PMUs and BTI
+- Fix bool options wrongly set to =m in kconfig fragments (HSA_AMD etc.)
+- Use madvise THP and enable MGLRU by default
+- loong64: enable NO_HZ_FULL, MGLRU, DAMON, IOMMUFD, BPF JIT always on, NR_CPUS 1024
+- Enable BTF on amd64 and arm64
+- Pin NIC and SCSI/RAID/HBA drivers explicitly in kconfig fragments
+- Add scripts/cve-list.sh to list CVE fixes contained in the kernel
+
 * Tue Oct 13 2026 Lierfang Team <itsupport@lierfang.com> - 6.6.0-19
 - Switch Linux to openEuler-24.03-LTS-SP4 branch, tag 6.6.0-159.4.18
 - Drop tools-perf-drop-duplicate-AMD64-RMP_CFG-MSR patch, not needed on SP4

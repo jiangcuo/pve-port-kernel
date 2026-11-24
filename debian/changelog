@@ -1,3 +1,25 @@
+pve-kernel (6.6.0-20) openeuler; urgency=medium
+
+  * Switch Linux back to OLK-6.6 mainline, tag 6.6.0-184.0.0
+    (6c1b9c30755b165b613565725f6d20848e781fde)
+  * Align PCIe NIC/HBA/RDMA/vDPA drivers across arches in common.kconfig
+  * Enable more storage (DRBD, SATA cards, dm targets) and network
+    (USB NIC, nftables/tc/qdisc, MPLS) drivers on all arches
+  * Enable guest drivers for nested setups: Hyper-V/Azure, VMware,
+    VirtualBox, Xen and Google gVNIC
+  * Enable VFIO VGA/IGD passthrough, Intel IOMMU by default and PCI P2PDMA
+  * arm64: enable HiSilicon PCIe error handling, Arm CMN/DMC-620/CoreSight
+    PMUs and BTI
+  * Fix bool options wrongly set to =m in kconfig fragments (HSA_AMD etc.)
+  * Use madvise THP and enable MGLRU by default
+  * loong64: enable NO_HZ_FULL, MGLRU, DAMON, IOMMUFD and BPF JIT always
+    on, raise NR_CPUS to 1024
+  * Enable BTF on amd64 and arm64
+  * Pin NIC and SCSI/RAID/HBA drivers explicitly in kconfig fragments
+  * Add scripts/cve-list.sh to list CVE fixes contained in the kernel
+
+ -- Lierfang Support Team <itsupport@lierfang.com>  Tue, 24 Nov 2026 01:46:18 +0000
+
 pve-kernel (6.6.0-19) openeuler; urgency=medium
 
   * Switch Linux to openEuler-24.03-LTS-SP4 branch, tag 6.6.0-159.4.18
