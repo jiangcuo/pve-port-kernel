@@ -15,7 +15,7 @@
 %global kernel_patch    0
 %global kernel_version  %{kernel_major}.%{kernel_minor}.%{kernel_patch}
 %global pkg_release     20
-%global pkg_distro      openeuler
+%global pkg_distro      phytium
 
 # 架构相关变量
 %ifarch x86_64
@@ -261,6 +261,7 @@ make -C linux \
 cd linux
 scripts/kconfig/merge_config.sh -m .config ../debian/config/common.kconfig
 scripts/kconfig/merge_config.sh -m .config ../debian/config/%{config_arch}.kconfig
+scripts/kconfig/merge_config.sh -m .config ../debian/config/phytium.kconfig
 scripts/config --set-str LOCALVERSION ""
 scripts/config --disable LOCALVERSION_AUTO
 make CC=%{kernel_cc} ARCH=%{ker_arch} \

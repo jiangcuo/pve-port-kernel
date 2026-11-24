@@ -134,6 +134,7 @@ ${KERNEL_SRC}/.config:
 	${MAKE} -C ${KERNEL_SRC} CC=${PVE_KERNEL_CC} HOSTCC=${PVE_KERNEL_CC} CROSS_COMPILE=${CROSS_COMPILE} ARCH=${KER_ARCH} ${DEF_CONFIG}
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/common.kconfig
 	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/${DEB_HOST_ARCH}.kconfig
+	cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config  ../debian/config/phytium.kconfig
 ifneq ($(VARIANT),)
 	$(if $(wildcard debian/config/${DEB_HOST_ARCH}-${VARIANT}.kconfig), \
 		cd ${KERNEL_SRC}; ./scripts/kconfig/merge_config.sh -m .config ../debian/config/${DEB_HOST_ARCH}-${VARIANT}.kconfig)

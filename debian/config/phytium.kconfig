@@ -1,0 +1,4 @@
+# Phytium-specific kernel config, maintained by the Phytium team.
+#
+# Only exists on the phytium branch. debian/rules merges it after
+# common.kconfig and arm64.kconfig, so options here override both.
